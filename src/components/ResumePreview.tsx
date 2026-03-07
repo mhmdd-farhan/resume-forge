@@ -1,0 +1,374 @@
+"use client";
+
+import { motion } from "framer-motion";
+import {
+  Download,
+  RefreshCw,
+  Pencil,
+  Target,
+  Briefcase,
+  Zap,
+  FileText,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import type { Resume, ResumeScore } from "@/lib/types";
+import { useState } from "react";
+
+interface ResumePreviewProps {
+  resume: Resume;
+  score: ResumeScore;
+  onDownload: () => void;
+  onRegenerate: () => void;
+  onEdit: () => void;
+  isDownloading: boolean;
+}
+
+function ScoreRing({
+  value,
+  label,
+  icon: Icon,
+  delay,
+}: {
+  value: number;
+  label: string;
+  icon: React.ElementType;
+  delay: number;
+}) {
+  const circumference = 2 * Math.PI * 28;
+  const strokeDashoffset = circumference - (value / 100) * circumference;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay, duration: 0.4 }}
+      className="flex flex-col items-center gap-2"
+    >
+      <div className="relative w-16 h-16">
+        <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+          <circle
+            cx="32"
+            cy="32"
+            r="28"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            className="text-muted/40"
+          />
+          <motion.circle
+            cx="32"
+            cy="32"
+            r="28"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            className="text-primary"
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ delay: delay + 0.2, duration: 1, ease: "easeOut" }}
+            style={{ strokeDasharray: circumference }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-primary" />
+        </div>
+      </div>
+      <div className="text-center">
+        <div className="text-sm font-semibold">{value}%</div>
+        <div className="text-[10px] text-muted-foreground">{label}</div>
+      </div>
+    </motion.div>
+  );
+}
+
+export function ResumePreview({
+  resume,
+  score,
+  onDownload,
+  onRegenerate,
+  onEdit,
+  isDownloading,
+}: ResumePreviewProps) {
+  const [showEditHint, setShowEditHint] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-4xl mx-auto"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Score Panel */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="lg:col-span-1 space-y-6"
+        >
+          {/* Overall Score */}
+          <div className="glass rounded-2xl p-6 space-y-4">
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Match Score
+            </div>
+            <div className="flex items-center gap-3">
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 12,
+                  delay: 0.3,
+                }}
+                className="text-5xl font-bold text-primary"
+              >
+                {score.overall}
+              </motion.span>
+              <span className="text-2xl text-muted-foreground font-light">
+                %
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              <ScoreRing
+                value={score.skillsMatch}
+                label="Skills"
+                icon={Zap}
+                delay={0.4}
+              />
+              <ScoreRing
+                value={score.experienceMatch}
+                label="Experience"
+                icon={Briefcase}
+                delay={0.5}
+              />
+              <ScoreRing
+                value={score.keywordMatch}
+                label="Keywords"
+                icon={Target}
+                delay={0.6}
+              />
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            <Button
+              onClick={onDownload}
+              disabled={isDownloading}
+              className="w-full gap-2 rounded-xl h-11 font-medium"
+            >
+              <Download className="w-4 h-4" />
+              {isDownloading ? "Generating PDF..." : "Download PDF"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onRegenerate}
+              className="w-full gap-2 rounded-xl h-11 font-medium"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Regenerate
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowEditHint(true);
+                onEdit();
+              }}
+              className="w-full gap-2 rounded-xl h-11 font-medium text-muted-foreground"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit Resume
+            </Button>
+            {showEditHint && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs text-muted-foreground text-center"
+              >
+                Edit feature coming in the next version
+              </motion.p>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Resume Preview */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+          className="lg:col-span-2"
+        >
+          <div className="glass rounded-2xl p-8 space-y-5 relative overflow-hidden">
+            {/* Subtle paper texture indicator */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
+
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  {resume.name}
+                </h1>
+                <p className="text-sm text-primary font-medium mt-0.5">
+                  {resume.title}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <FileText className="w-4 h-4" />
+                <span className="text-xs">1 page</span>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div>
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1.5">
+                Summary
+              </h3>
+              <p className="text-sm leading-relaxed text-foreground/80">
+                {resume.summary}
+              </p>
+            </div>
+
+            {/* Skills */}
+            <div>
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+                Skills
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {resume.skills.map((skill, i) => (
+                  <motion.div
+                    key={skill}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 + i * 0.03 }}
+                  >
+                    <Badge
+                      variant="secondary"
+                      className="text-xs font-normal rounded-md px-2.5 py-0.5"
+                    >
+                      {skill}
+                    </Badge>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Experience */}
+            {resume.experience.length > 0 && (
+              <div>
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                  Experience
+                </h3>
+                <div className="space-y-4">
+                  {resume.experience.map((exp, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
+                      className="space-y-1"
+                    >
+                      <div className="flex items-baseline justify-between">
+                        <h4 className="text-sm font-semibold">{exp.role}</h4>
+                        <span className="text-xs text-muted-foreground">
+                          {exp.duration}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {exp.company}
+                      </p>
+                      <ul className="space-y-0.5 mt-1">
+                        {exp.highlights.map((h, j) => (
+                          <li
+                            key={j}
+                            className="text-xs text-foreground/75 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-muted-foreground"
+                          >
+                            {h}
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Projects */}
+            {resume.projects.length > 0 && (
+              <div>
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                  Projects
+                </h3>
+                <div className="space-y-3">
+                  {resume.projects.map((proj, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 + i * 0.08 }}
+                      className="space-y-1"
+                    >
+                      <h4 className="text-sm font-semibold">{proj.name}</h4>
+                      <p className="text-xs text-foreground/75">
+                        {proj.description}
+                      </p>
+                      {proj.highlights && proj.highlights.length > 0 && (
+                        <ul className="space-y-0.5 mt-1">
+                          {proj.highlights.map((h, j) => (
+                            <li
+                              key={j}
+                              className="text-xs text-foreground/75 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-muted-foreground"
+                            >
+                              {h}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="flex flex-wrap gap-1 pt-0.5">
+                        {proj.tech.map((t) => (
+                          <span
+                            key={t}
+                            className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Education */}
+            {resume.education.length > 0 && (
+              <div>
+                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+                  Education
+                </h3>
+                <div className="space-y-2">
+                  {resume.education.map((edu, i) => (
+                    <div key={i} className="flex items-baseline justify-between">
+                      <div>
+                        <span className="text-sm font-medium">
+                          {edu.degree}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {edu.institution}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {edu.year}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}

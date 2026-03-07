@@ -1,101 +1,246 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Anvil } from "lucide-react";
+import { JobInput } from "@/components/JobInput";
+import { ProfileInput } from "@/components/ProfileInput";
+import { ProgressPipeline } from "@/components/ProgressPipeline";
+import { ResumePreview } from "@/components/ResumePreview";
+import { generateResume } from "./actions/generateResume";
+import { generateResumePDF } from "@/lib/pdf";
+import type { Resume, ResumeScore } from "@/lib/types";
+
+type Step = "job" | "profile" | "generating" | "result";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [step, setStep] = useState<Step>("job");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Form state
+  const [jobDescription, setJobDescription] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [githubRepoUrls, setGithubRepoUrls] = useState<string[]>(["", "", ""]);
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [linkedinText, setLinkedinText] = useState("");
+  const [portfolioUrl, setPortfolioUrl] = useState("");
+
+  // Result state
+  const [resume, setResume] = useState<Resume | null>(null);
+  const [score, setScore] = useState<ResumeScore | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleGenerate = useCallback(async () => {
+    setStep("generating");
+    setError(null);
+
+    const formData = new FormData();
+    formData.set("jobDescription", jobDescription);
+    formData.set("githubUrl", githubUrl);
+    formData.set("githubRepoUrls", githubRepoUrls.filter((u) => u.trim()).join(","));
+    formData.set("linkedinUrl", linkedinUrl);
+    formData.set("linkedinText", linkedinText);
+    formData.set("portfolioUrl", portfolioUrl);
+
+    try {
+      const result = await generateResume(formData);
+      if (result.success) {
+        setResume(result.data.resume);
+        setScore(result.data.score);
+      } else {
+        setError(result.error);
+        setStep("profile");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setStep("profile");
+    }
+  }, [jobDescription, githubUrl, githubRepoUrls, linkedinUrl, linkedinText, portfolioUrl]);
+
+  const handlePipelineCompleteWrapper = useCallback(() => {
+    if (resume && score) {
+      setTimeout(() => setStep("result"), 500);
+    }
+  }, [resume, score]);
+
+  const handleDownload = useCallback(async () => {
+    if (!resume) return;
+    setIsDownloading(true);
+    try {
+      const pdfBytes = await generateResumePDF(resume);
+      const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${resume.name.replace(/\s+/g, "_")}_Resume.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [resume]);
+
+  const handleRegenerate = useCallback(() => {
+    setResume(null);
+    setScore(null);
+    handleGenerate();
+  }, [handleGenerate]);
+
+  const handleEdit = useCallback(() => {
+    // Placeholder for edit functionality
+  }, []);
+
+  const stepIndicators = [
+    { id: "job", label: "Job" },
+    { id: "profile", label: "Profile" },
+    { id: "generating", label: "Generate" },
+    { id: "result", label: "Result" },
+  ] as const;
+
+  const currentStepIndex = stepIndicators.findIndex((s) => s.id === step);
+
+  return (
+    <main className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="w-full border-b border-border/50 backdrop-blur-sm bg-background/60 sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Anvil className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="font-semibold text-sm tracking-tight">
+              ResumeForge
+            </span>
+          </div>
+
+          {/* Step Indicators */}
+          <div className="hidden sm:flex items-center gap-1">
+            {stepIndicators.map((s, i) => (
+              <div key={s.id} className="flex items-center">
+                <div
+                  className={`
+                    flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-300
+                    ${
+                      i === currentStepIndex
+                        ? "bg-primary/10 text-primary"
+                        : i < currentStepIndex
+                          ? "text-muted-foreground"
+                          : "text-muted-foreground/40"
+                    }
+                  `}
+                >
+                  <span
+                    className={`
+                      w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-semibold
+                      ${
+                        i === currentStepIndex
+                          ? "bg-primary text-primary-foreground"
+                          : i < currentStepIndex
+                            ? "bg-muted-foreground/20 text-muted-foreground"
+                            : "bg-muted text-muted-foreground/40"
+                      }
+                    `}
+                  >
+                    {i + 1}
+                  </span>
+                  {s.label}
+                </div>
+                {i < stepIndicators.length - 1 && (
+                  <div
+                    className={`w-4 h-px mx-0.5 transition-colors duration-300 ${
+                      i < currentStepIndex
+                        ? "bg-muted-foreground/30"
+                        : "bg-muted"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-2.5 rounded-xl text-sm max-w-md"
+            >
+              {error}
+              <button
+                onClick={() => setError(null)}
+                className="ml-3 text-destructive/60 hover:text-destructive"
+              >
+                Dismiss
+              </button>
+            </motion.div>
+          )}
+
+          {step === "job" && (
+            <JobInput
+              key="job"
+              value={jobDescription}
+              onChange={setJobDescription}
+              onNext={() => setStep("profile")}
+            />
+          )}
+
+          {step === "profile" && (
+            <ProfileInput
+              key="profile"
+              githubUrl={githubUrl}
+              githubRepoUrls={githubRepoUrls}
+              linkedinUrl={linkedinUrl}
+              linkedinText={linkedinText}
+              portfolioUrl={portfolioUrl}
+              onGithubChange={setGithubUrl}
+              onGithubRepoUrlsChange={setGithubRepoUrls}
+              onLinkedinChange={setLinkedinUrl}
+              onLinkedinTextChange={setLinkedinText}
+              onPortfolioChange={setPortfolioUrl}
+              onNext={handleGenerate}
+              onBack={() => setStep("job")}
+            />
+          )}
+
+          {step === "generating" && (
+            <ProgressPipeline
+              key="generating"
+              isActive={step === "generating"}
+              onComplete={handlePipelineCompleteWrapper}
+            />
+          )}
+
+          {step === "result" && resume && score && (
+            <ResumePreview
+              key="result"
+              resume={resume}
+              score={score}
+              onDownload={handleDownload}
+              onRegenerate={handleRegenerate}
+              onEdit={handleEdit}
+              isDownloading={isDownloading}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Footer */}
+      <footer className="w-full border-t border-border/30 py-4">
+        <div className="max-w-5xl mx-auto px-6 flex items-center justify-center">
+          <p className="text-xs text-muted-foreground/60">
+            Built with AI. Your data is not stored.
+          </p>
+        </div>
       </footer>
-    </div>
+    </main>
   );
 }
