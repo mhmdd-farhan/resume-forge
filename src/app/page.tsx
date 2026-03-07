@@ -9,7 +9,7 @@ import { ProgressPipeline } from "@/components/ProgressPipeline";
 import { ResumePreview } from "@/components/ResumePreview";
 import { generateResume } from "./actions/generateResume";
 import { generateResumePDF } from "@/lib/pdf";
-import type { Resume, ResumeScore } from "@/lib/types";
+import type { Resume, ResumeScore, ContactInfo } from "@/lib/types";
 
 type Step = "job" | "profile" | "generating" | "result";
 
@@ -23,10 +23,14 @@ export default function Home() {
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [linkedinText, setLinkedinText] = useState("");
   const [portfolioUrl, setPortfolioUrl] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [educationText, setEducationText] = useState("");
 
   // Result state
   const [resume, setResume] = useState<Resume | null>(null);
   const [score, setScore] = useState<ResumeScore | null>(null);
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -41,12 +45,16 @@ export default function Home() {
     formData.set("linkedinUrl", linkedinUrl);
     formData.set("linkedinText", linkedinText);
     formData.set("portfolioUrl", portfolioUrl);
+    formData.set("phone", phone);
+    formData.set("address", address);
+    formData.set("educationText", educationText);
 
     try {
       const result = await generateResume(formData);
       if (result.success) {
         setResume(result.data.resume);
         setScore(result.data.score);
+        setContactInfo(result.data.contactInfo);
       } else {
         setError(result.error);
         setStep("profile");
@@ -55,7 +63,7 @@ export default function Home() {
       setError("Something went wrong. Please try again.");
       setStep("profile");
     }
-  }, [jobDescription, githubUrl, githubRepoUrls, linkedinUrl, linkedinText, portfolioUrl]);
+  }, [jobDescription, githubUrl, githubRepoUrls, linkedinUrl, linkedinText, portfolioUrl, phone, address, educationText]);
 
   const handlePipelineCompleteWrapper = useCallback(() => {
     if (resume && score) {
@@ -67,7 +75,7 @@ export default function Home() {
     if (!resume) return;
     setIsDownloading(true);
     try {
-      const pdfBytes = await generateResumePDF(resume);
+      const pdfBytes = await generateResumePDF(resume, contactInfo ?? undefined);
       const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -82,11 +90,12 @@ export default function Home() {
     } finally {
       setIsDownloading(false);
     }
-  }, [resume]);
+  }, [resume, contactInfo]);
 
   const handleRegenerate = useCallback(() => {
     setResume(null);
     setScore(null);
+    setContactInfo(null);
     handleGenerate();
   }, [handleGenerate]);
 
@@ -201,11 +210,17 @@ export default function Home() {
               linkedinUrl={linkedinUrl}
               linkedinText={linkedinText}
               portfolioUrl={portfolioUrl}
+              phone={phone}
+              address={address}
+              educationText={educationText}
               onGithubChange={setGithubUrl}
               onGithubRepoUrlsChange={setGithubRepoUrls}
               onLinkedinChange={setLinkedinUrl}
               onLinkedinTextChange={setLinkedinText}
               onPortfolioChange={setPortfolioUrl}
+              onPhoneChange={setPhone}
+              onAddressChange={setAddress}
+              onEducationTextChange={setEducationText}
               onNext={handleGenerate}
               onBack={() => setStep("job")}
             />
@@ -224,6 +239,7 @@ export default function Home() {
               key="result"
               resume={resume}
               score={score}
+              contactInfo={contactInfo ?? undefined}
               onDownload={handleDownload}
               onRegenerate={handleRegenerate}
               onEdit={handleEdit}

@@ -9,15 +9,20 @@ import {
   Briefcase,
   Zap,
   FileText,
+  Github,
+  Linkedin,
+  Phone,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Resume, ResumeScore } from "@/lib/types";
+import type { Resume, ResumeScore, ContactInfo } from "@/lib/types";
 import { useState } from "react";
 
 interface ResumePreviewProps {
   resume: Resume;
   score: ResumeScore;
+  contactInfo?: ContactInfo;
   onDownload: () => void;
   onRegenerate: () => void;
   onEdit: () => void;
@@ -86,6 +91,7 @@ function ScoreRing({
 export function ResumePreview({
   resume,
   score,
+  contactInfo,
   onDownload,
   onRegenerate,
   onEdit,
@@ -213,6 +219,44 @@ export function ResumePreview({
                 <p className="text-sm text-primary font-medium mt-0.5">
                   {resume.title}
                 </p>
+                {contactInfo && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                    {contactInfo.githubUrl && (
+                      <a
+                        href={contactInfo.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Github className="w-3 h-3" />
+                        {contactInfo.githubUrl.replace(/^https?:\/\/(www\.)?/, "")}
+                      </a>
+                    )}
+                    {contactInfo.linkedinUrl && (
+                      <a
+                        href={contactInfo.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Linkedin className="w-3 h-3" />
+                        {contactInfo.linkedinUrl.replace(/^https?:\/\/(www\.)?/, "")}
+                      </a>
+                    )}
+                    {contactInfo.phone && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Phone className="w-3 h-3" />
+                        {contactInfo.phone}
+                      </span>
+                    )}
+                    {contactInfo.address && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="w-3 h-3" />
+                        {contactInfo.address}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <FileText className="w-4 h-4" />

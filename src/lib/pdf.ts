@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import type { Resume } from "./types";
+import type { Resume, ContactInfo } from "./types";
 
 const COLORS = {
   black: rgb(0.1, 0.1, 0.12),
@@ -16,14 +16,29 @@ const MARGIN_LEFT = 54;
 const MARGIN_RIGHT = 54;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
 
-export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
+export async function generateResumePDF(resume: Resume, contactInfo?: ContactInfo): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  const page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  let page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
   const helvetica = await doc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
 
   let y = PAGE_HEIGHT - 50;
+
+  const MARGIN_BOTTOM = 50;
+
+  // Add a new page and reset y position
+  const addPage = () => {
+    page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    y = PAGE_HEIGHT - 50;
+  };
+
+  // Ensure enough space, add a new page if needed
+  const ensureSpace = (needed: number) => {
+    if (y < MARGIN_BOTTOM + needed) {
+      addPage();
+    }
+  };
 
   // Helper to draw text
   const drawText = (
@@ -60,7 +75,10 @@ export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
     if (currentLine) lines.push(currentLine);
 
     for (const line of lines) {
-      if (yPos < 40) break;
+      if (yPos < MARGIN_BOTTOM) {
+        addPage();
+        yPos = y;
+      }
       page.drawText(line, { x, y: yPos, size, font, color });
       yPos -= size + 4;
     }
@@ -70,7 +88,8 @@ export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
 
   // Helper: draw a section header
   const drawSectionHeader = (title: string, yPos: number) => {
-    if (yPos < 60) return yPos;
+    ensureSpace(30);
+    yPos = y; // use updated y after ensureSpace
     yPos -= 6;
     page.drawText(title.toUpperCase(), {
       x: MARGIN_LEFT,
@@ -108,7 +127,26 @@ export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
     font: helvetica,
     color: COLORS.accent,
   });
-  y -= 22;
+  y -= 16;
+
+  // ─── CONTACT INFO ───
+  if (contactInfo) {
+    const contactParts: string[] = [];
+    if (contactInfo.githubUrl) contactParts.push(contactInfo.githubUrl.replace(/^https?:\/\/(www\.)?/, ""));
+    if (contactInfo.linkedinUrl) contactParts.push(contactInfo.linkedinUrl.replace(/^https?:\/\/(www\.)?/, ""));
+    if (contactInfo.phone) contactParts.push(contactInfo.phone);
+    if (contactInfo.address) contactParts.push(contactInfo.address);
+
+    if (contactParts.length > 0) {
+      const contactText = contactParts.join("  |  ");
+      y = drawText(contactText, MARGIN_LEFT, y, {
+        size: 8.5,
+        color: COLORS.gray,
+      });
+      y -= 4;
+    }
+  }
+  y -= 4;
 
   // ─── SUMMARY ───
   y = drawSectionHeader("Summary", y);
@@ -132,7 +170,7 @@ export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
     y = drawSectionHeader("Experience", y);
 
     for (const exp of resume.experience) {
-      if (y < 80) break;
+      ensureSpace(40);
 
       // Role and Company
       page.drawText(exp.role, {
@@ -164,7 +202,6 @@ export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
 
       // Highlights
       for (const highlight of exp.highlights) {
-        if (y < 50) break;
         y = drawText(`•  ${highlight}`, MARGIN_LEFT + 8, y, {
           size: 9,
           color: COLORS.dark,
@@ -177,11 +214,11 @@ export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
   }
 
   // ─── PROJECTS ───
-  if (resume.projects.length > 0 && y > 100) {
+  if (resume.projects.length > 0) {
     y = drawSectionHeader("Projects", y);
 
     for (const proj of resume.projects) {
-      if (y < 70) break;
+      ensureSpace(40);
 
       page.drawText(proj.name, {
         x: MARGIN_LEFT,
@@ -201,7 +238,6 @@ export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
       // Project highlights
       if (proj.highlights && proj.highlights.length > 0) {
         for (const highlight of proj.highlights) {
-          if (y < 50) break;
           y = drawText(`•  ${highlight}`, MARGIN_LEFT + 8, y, {
             size: 9,
             color: COLORS.dark,
@@ -222,11 +258,11 @@ export async function generateResumePDF(resume: Resume): Promise<Uint8Array> {
   }
 
   // ─── EDUCATION ───
-  if (resume.education.length > 0 && y > 70) {
+  if (resume.education.length > 0) {
     y = drawSectionHeader("Education", y);
 
     for (const edu of resume.education) {
-      if (y < 50) break;
+      ensureSpace(30);
 
       page.drawText(edu.degree, {
         x: MARGIN_LEFT,

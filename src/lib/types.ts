@@ -44,13 +44,39 @@ export const ResumeScoreSchema = z.object({
 
 export type ResumeScore = z.infer<typeof ResumeScoreSchema>;
 
+export interface ContactInfo {
+  phone?: string;
+  address?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+}
+
+// Helper: converts empty string / null / undefined to undefined before URL validation
+const optionalUrl = (message: string) =>
+  z.preprocess(
+    (val) => (val === "" || val == null ? undefined : val),
+    z.string().url(message).optional(),
+  );
+
+// Helper: converts empty string / null / undefined to undefined for plain strings
+const optionalString = z.preprocess(
+  (val) => (val === "" || val == null ? undefined : val),
+  z.string().optional(),
+);
+
 export const GenerateInputSchema = z.object({
-  jobDescription: z.string().min(50, "Job description must be at least 50 characters"),
-  githubUrl: z.string().url("Enter a valid GitHub URL").optional().or(z.literal("")),
-  githubRepoUrls: z.string().optional().or(z.literal("")),
-  linkedinUrl: z.string().url("Enter a valid LinkedIn URL").optional().or(z.literal("")),
-  linkedinText: z.string().optional().or(z.literal("")),
-  portfolioUrl: z.string().url("Enter a valid portfolio URL").optional().or(z.literal("")),
+  jobDescription: z
+    .string()
+    .min(50, "Job description must be at least 50 characters"),
+  phone: optionalString,
+  address: optionalString,
+  githubUrl: optionalUrl("Enter a valid GitHub URL"),
+  githubRepoUrls: optionalString,
+  linkedinUrl: optionalUrl("Enter a valid LinkedIn URL"),
+  linkedinText: optionalString,
+  educationText: optionalString,
+  portfolioUrl: optionalUrl("Enter a valid portfolio URL"),
 });
 
 export type GenerateInput = z.infer<typeof GenerateInputSchema>;
@@ -65,4 +91,5 @@ export type PipelineStep =
 export interface GenerateResult {
   resume: Resume;
   score: ResumeScore;
+  contactInfo: ContactInfo;
 }

@@ -11,6 +11,9 @@ import {
   ChevronDown,
   FileText,
   FolderGit2,
+  Phone,
+  MapPin,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,11 +23,17 @@ interface ProfileInputProps {
   linkedinUrl: string;
   linkedinText: string;
   portfolioUrl: string;
+  phone: string;
+  address: string;
+  educationText: string;
   onGithubChange: (value: string) => void;
   onGithubRepoUrlsChange: (value: string[]) => void;
   onLinkedinChange: (value: string) => void;
   onLinkedinTextChange: (value: string) => void;
   onPortfolioChange: (value: string) => void;
+  onPhoneChange: (value: string) => void;
+  onAddressChange: (value: string) => void;
+  onEducationTextChange: (value: string) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -37,6 +46,7 @@ function InputField({
   onChange,
   optional,
   delay,
+  type = "url",
 }: {
   icon: React.ElementType;
   label: string;
@@ -45,6 +55,7 @@ function InputField({
   onChange: (value: string) => void;
   optional?: boolean;
   delay: number;
+  type?: string;
 }) {
   return (
     <motion.div
@@ -64,7 +75,7 @@ function InputField({
       </label>
       <div className="relative">
         <input
-          type="url"
+          type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
@@ -81,11 +92,17 @@ export function ProfileInput({
   linkedinUrl,
   linkedinText,
   portfolioUrl,
+  phone,
+  address,
+  educationText,
   onGithubChange,
   onGithubRepoUrlsChange,
   onLinkedinChange,
   onLinkedinTextChange,
   onPortfolioChange,
+  onPhoneChange,
+  onAddressChange,
+  onEducationTextChange,
   onNext,
   onBack,
 }: ProfileInputProps) {
@@ -93,6 +110,7 @@ export function ProfileInput({
     githubRepoUrls.some((u) => u.trim())
   );
   const [showLinkedinPaste, setShowLinkedinPaste] = useState(!!linkedinText);
+  const [showEducation, setShowEducation] = useState(!!educationText);
 
   const updateRepoUrl = (index: number, value: string) => {
     const updated = [...githubRepoUrls];
@@ -248,6 +266,48 @@ export function ProfileInput({
             )}
           </motion.div>
 
+          {/* Education toggle */}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowEducation(!showEducation)}
+              className="flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              Add your education
+              <ChevronDown
+                className={`w-3 h-3 transition-transform duration-200 ${
+                  showEducation ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {showEducation && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-2"
+              >
+                <p className="text-xs text-muted-foreground mb-2">
+                  List your degrees, institutions, and graduation years. This
+                  will be used as the PRIMARY source for the Education section.
+                </p>
+                <textarea
+                  value={educationText}
+                  onChange={(e) => onEducationTextChange(e.target.value)}
+                  placeholder={`Example:\nB.S. Computer Science, Stanford University, 2020\nM.S. Machine Learning, MIT, 2022`}
+                  className="w-full h-28 resize-none rounded-xl border border-border bg-card/80 backdrop-blur-sm px-4 py-3 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all duration-200"
+                />
+              </motion.div>
+            )}
+          </motion.div>
+
           {/* Portfolio */}
           <InputField
             icon={Globe}
@@ -256,7 +316,31 @@ export function ProfileInput({
             value={portfolioUrl}
             onChange={onPortfolioChange}
             optional
-            delay={0.3}
+            delay={0.35}
+          />
+
+          {/* Phone */}
+          <InputField
+            icon={Phone}
+            label="Phone Number"
+            placeholder="+1 (555) 123-4567"
+            value={phone}
+            onChange={onPhoneChange}
+            optional
+            delay={0.4}
+            type="tel"
+          />
+
+          {/* Address */}
+          <InputField
+            icon={MapPin}
+            label="Address"
+            placeholder="San Francisco, CA"
+            value={address}
+            onChange={onAddressChange}
+            optional
+            delay={0.45}
+            type="text"
           />
         </div>
 
