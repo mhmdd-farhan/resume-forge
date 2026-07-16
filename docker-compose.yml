@@ -1,0 +1,51 @@
+services:
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  db:
+    image: postgres:16
+    container_name: resumeforge-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: resumeforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d resumeforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: resumeforge-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/resumeforge?schema=public
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - POLAR_ACCESS_TOKEN=${POLAR_ACCESS_TOKEN}
+      - POLAR_WEBHOOK_SECRET=${POLAR_WEBHOOK_SECRET}
+      - N8N_BASIC_AUTH=${N8N_BASIC_AUTH}
+      - NEXT_PUBLIC_POLAR_PREMIUM_PRODUCT_ID=${NEXT_PUBLIC_POLAR_PREMIUM_PRODUCT_ID}
+      - NEXT_PUBLIC_POLAR_ANNUAL_PRODUCT_ID=${NEXT_PUBLIC_POLAR_ANNUAL_PRODUCT_ID}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -7,6 +7,9 @@ import {
   parseLinkedInProfile,
 } from "@/lib/parser";
 import { generateResumeWithAI } from "@/lib/ai";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma";
 
 export async function generateResume(
   formData: FormData,
@@ -14,6 +17,39 @@ export async function generateResume(
   { success: true; data: GenerateResult } | { success: false; error: string }
 > {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !(session.user as any).id) {
+      return { success: false, error: "Please sign in with Google to generate a resume." };
+    }
+
+    const userId = (session.user as any).id;
+
+    // Always read fresh from DB — never trust JWT for billing-critical checks
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, resumesGenerated: true, polarSubscriptionId: true },
+    });
+
+    if (!dbUser) {
+      return { success: false, error: "User session not found in database." };
+    }
+
+    // Determine effective plan:
+    // If plan is premium/annual but there's no linked subscription ID,
+    // the subscription was likely revoked — treat as free
+    const isPaidPlan = dbUser.plan === "premium" || dbUser.plan === "annual";
+    const hasValidSubscription = isPaidPlan && !!dbUser.polarSubscriptionId;
+    const effectivePlan: string = hasValidSubscription ? dbUser.plan : "free";
+
+    // Free tier limit: 3 generations maximum
+    if (effectivePlan === "free" && dbUser.resumesGenerated >= 3) {
+      return {
+        success: false,
+        error:
+          "You have reached the limit of 3 free resume generations. Please upgrade to a Premium plan for unlimited access.",
+      };
+    }
+
     const raw = {
       jobDescription: formData.get("jobDescription") as string,
       phone: formData.get("phone") as string,
@@ -85,6 +121,16 @@ export async function generateResume(
       portfolioUrl: portfolioUrl ?? undefined,
     };
 
+    // Increment user resume generation count on success
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        resumesGenerated: {
+          increment: 1,
+        },
+      },
+    });
+
     return { success: true, data: { ...result, contactInfo } };
   } catch (err) {
     console.error("Resume generation error:", err);
@@ -94,3 +140,4 @@ export async function generateResume(
     };
   }
 }
+

@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import {
   Download,
   RefreshCw,
-  Pencil,
   Target,
   Briefcase,
   Zap,
@@ -13,11 +12,12 @@ import {
   Linkedin,
   Phone,
   MapPin,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Resume, ResumeScore, ContactInfo } from "@/lib/types";
-import { useState } from "react";
+import type { Resume, ResumeScore, ContactInfo, Experience, Project, Education } from "@/lib/types";
+import { useState, useRef, useEffect } from "react";
 
 interface ResumePreviewProps {
   resume: Resume;
@@ -25,8 +25,93 @@ interface ResumePreviewProps {
   contactInfo?: ContactInfo;
   onDownload: () => void;
   onRegenerate: () => void;
-  onEdit: () => void;
+  onResumeChange?: (resume: Resume) => void;
   isDownloading: boolean;
+}
+
+function EditableText({
+  value,
+  onChange,
+  multiline = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  multiline?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const len = textareaRef.current.value.length;
+        textareaRef.current.setSelectionRange(len, len);
+      }
+    }
+  }, [editing]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    onChange(trimmed || value);
+    setEditing(false);
+  };
+
+  if (editing) {
+    const baseClass =
+      "bg-transparent outline outline-1 outline-primary/60 rounded px-0.5 w-full font-[inherit] text-[inherit] leading-[inherit] tracking-[inherit]";
+
+    if (multiline) {
+      return (
+        <textarea
+          ref={textareaRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setDraft(value);
+              setEditing(false);
+            }
+          }}
+          className={`${baseClass} resize-none`}
+          rows={Math.max(2, draft.split("\n").length)}
+        />
+      );
+    }
+
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") {
+            setDraft(value);
+            setEditing(false);
+          }
+        }}
+        className={baseClass}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => {
+        setDraft(value);
+        setEditing(true);
+      }}
+      className="cursor-text hover:bg-primary/5 hover:outline hover:outline-1 hover:outline-primary/25 hover:rounded px-0.5 -mx-0.5 transition-colors"
+    >
+      {value}
+    </span>
+  );
 }
 
 function ScoreRing({
@@ -94,10 +179,80 @@ export function ResumePreview({
   contactInfo,
   onDownload,
   onRegenerate,
-  onEdit,
+  onResumeChange,
   isDownloading,
 }: ResumePreviewProps) {
-  const [showEditHint, setShowEditHint] = useState(false);
+  const [localResume, setLocalResume] = useState<Resume>(resume);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    setLocalResume(resume);
+  }, [resume]);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    onResumeChange?.(localResume);
+  }, [localResume]);
+
+  function updateField<K extends keyof Resume>(field: K, value: Resume[K]) {
+    setLocalResume((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function updateSkill(i: number, value: string) {
+    const skills = localResume.skills.map((s, idx) => (idx === i ? value : s));
+    updateField("skills", skills);
+  }
+
+  function updateExpField(idx: number, field: keyof Experience, value: string) {
+    const experience = localResume.experience.map((e, i) =>
+      i === idx ? { ...e, [field]: value } : e
+    );
+    updateField("experience", experience);
+  }
+
+  function updateExpHighlight(expIdx: number, hlIdx: number, value: string) {
+    const experience = localResume.experience.map((e, i) => {
+      if (i !== expIdx) return e;
+      const highlights = e.highlights.map((h, j) => (j === hlIdx ? value : h));
+      return { ...e, highlights };
+    });
+    updateField("experience", experience);
+  }
+
+  function updateProjField(idx: number, field: keyof Project, value: string | string[]) {
+    const projects = localResume.projects.map((p, i) =>
+      i === idx ? { ...p, [field]: value } : p
+    );
+    updateField("projects", projects);
+  }
+
+  function updateProjHighlight(projIdx: number, hlIdx: number, value: string) {
+    const projects = localResume.projects.map((p, i) => {
+      if (i !== projIdx) return p;
+      const highlights = (p.highlights ?? []).map((h, j) => (j === hlIdx ? value : h));
+      return { ...p, highlights };
+    });
+    updateField("projects", projects);
+  }
+
+  function updateProjTech(projIdx: number, techIdx: number, value: string) {
+    const projects = localResume.projects.map((p, i) => {
+      if (i !== projIdx) return p;
+      const tech = p.tech.map((t, j) => (j === techIdx ? value : t));
+      return { ...p, tech };
+    });
+    updateField("projects", projects);
+  }
+
+  function updateEduField(idx: number, field: keyof Education, value: string) {
+    const education = localResume.education.map((e, i) =>
+      i === idx ? { ...e, [field]: value } : e
+    );
+    updateField("education", education);
+  }
 
   return (
     <motion.div
@@ -177,26 +332,10 @@ export function ResumePreview({
               <RefreshCw className="w-4 h-4" />
               Regenerate
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setShowEditHint(true);
-                onEdit();
-              }}
-              className="w-full gap-2 rounded-xl h-11 font-medium text-muted-foreground"
-            >
-              <Pencil className="w-4 h-4" />
-              Edit Resume
-            </Button>
-            {showEditHint && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-xs text-muted-foreground text-center"
-              >
-                Edit feature coming in the next version
-              </motion.p>
-            )}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground">
+              <Pencil className="w-3.5 h-3.5 shrink-0" />
+              Click any text on the resume to edit it
+            </div>
           </div>
         </motion.div>
 
@@ -208,16 +347,22 @@ export function ResumePreview({
           className="lg:col-span-2"
         >
           <div className="glass rounded-2xl p-8 space-y-5 relative overflow-hidden">
-            {/* Subtle paper texture indicator */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
 
+            {/* Header */}
             <div className="flex items-start justify-between">
-              <div>
+              <div className="flex-1 min-w-0">
                 <h1 className="text-2xl font-bold tracking-tight">
-                  {resume.name}
+                  <EditableText
+                    value={localResume.name}
+                    onChange={(v) => updateField("name", v)}
+                  />
                 </h1>
                 <p className="text-sm text-primary font-medium mt-0.5">
-                  {resume.title}
+                  <EditableText
+                    value={localResume.title}
+                    onChange={(v) => updateField("title", v)}
+                  />
                 </p>
                 {contactInfo && (
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
@@ -258,7 +403,7 @@ export function ResumePreview({
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-muted-foreground shrink-0 ml-4">
                 <FileText className="w-4 h-4" />
                 <span className="text-xs">1 page</span>
               </div>
@@ -270,7 +415,11 @@ export function ResumePreview({
                 Summary
               </h3>
               <p className="text-sm leading-relaxed text-foreground/80">
-                {resume.summary}
+                <EditableText
+                  value={localResume.summary}
+                  onChange={(v) => updateField("summary", v)}
+                  multiline
+                />
               </p>
             </div>
 
@@ -280,9 +429,9 @@ export function ResumePreview({
                 Skills
               </h3>
               <div className="flex flex-wrap gap-1.5">
-                {resume.skills.map((skill, i) => (
+                {localResume.skills.map((skill, i) => (
                   <motion.div
-                    key={skill}
+                    key={i}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.4 + i * 0.03 }}
@@ -291,7 +440,10 @@ export function ResumePreview({
                       variant="secondary"
                       className="text-xs font-normal rounded-md px-2.5 py-0.5"
                     >
-                      {skill}
+                      <EditableText
+                        value={skill}
+                        onChange={(v) => updateSkill(i, v)}
+                      />
                     </Badge>
                   </motion.div>
                 ))}
@@ -299,13 +451,13 @@ export function ResumePreview({
             </div>
 
             {/* Experience */}
-            {resume.experience.length > 0 && (
+            {localResume.experience.length > 0 && (
               <div>
                 <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
                   Experience
                 </h3>
                 <div className="space-y-4">
-                  {resume.experience.map((exp, i) => (
+                  {localResume.experience.map((exp, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 8 }}
@@ -313,14 +465,25 @@ export function ResumePreview({
                       transition={{ delay: 0.5 + i * 0.1 }}
                       className="space-y-1"
                     >
-                      <div className="flex items-baseline justify-between">
-                        <h4 className="text-sm font-semibold">{exp.role}</h4>
-                        <span className="text-xs text-muted-foreground">
-                          {exp.duration}
+                      <div className="flex items-baseline justify-between gap-2">
+                        <h4 className="text-sm font-semibold">
+                          <EditableText
+                            value={exp.role}
+                            onChange={(v) => updateExpField(i, "role", v)}
+                          />
+                        </h4>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          <EditableText
+                            value={exp.duration}
+                            onChange={(v) => updateExpField(i, "duration", v)}
+                          />
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {exp.company}
+                        <EditableText
+                          value={exp.company}
+                          onChange={(v) => updateExpField(i, "company", v)}
+                        />
                       </p>
                       <ul className="space-y-0.5 mt-1">
                         {exp.highlights.map((h, j) => (
@@ -328,7 +491,11 @@ export function ResumePreview({
                             key={j}
                             className="text-xs text-foreground/75 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-muted-foreground"
                           >
-                            {h}
+                            <EditableText
+                              value={h}
+                              onChange={(v) => updateExpHighlight(i, j, v)}
+                              multiline
+                            />
                           </li>
                         ))}
                       </ul>
@@ -339,13 +506,13 @@ export function ResumePreview({
             )}
 
             {/* Projects */}
-            {resume.projects.length > 0 && (
+            {localResume.projects.length > 0 && (
               <div>
                 <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
                   Projects
                 </h3>
                 <div className="space-y-3">
-                  {resume.projects.map((proj, i) => (
+                  {localResume.projects.map((proj, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 8 }}
@@ -353,9 +520,18 @@ export function ResumePreview({
                       transition={{ delay: 0.6 + i * 0.08 }}
                       className="space-y-1"
                     >
-                      <h4 className="text-sm font-semibold">{proj.name}</h4>
+                      <h4 className="text-sm font-semibold">
+                        <EditableText
+                          value={proj.name}
+                          onChange={(v) => updateProjField(i, "name", v)}
+                        />
+                      </h4>
                       <p className="text-xs text-foreground/75">
-                        {proj.description}
+                        <EditableText
+                          value={proj.description}
+                          onChange={(v) => updateProjField(i, "description", v)}
+                          multiline
+                        />
                       </p>
                       {proj.highlights && proj.highlights.length > 0 && (
                         <ul className="space-y-0.5 mt-1">
@@ -364,18 +540,25 @@ export function ResumePreview({
                               key={j}
                               className="text-xs text-foreground/75 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-muted-foreground"
                             >
-                              {h}
+                              <EditableText
+                                value={h}
+                                onChange={(v) => updateProjHighlight(i, j, v)}
+                                multiline
+                              />
                             </li>
                           ))}
                         </ul>
                       )}
                       <div className="flex flex-wrap gap-1 pt-0.5">
-                        {proj.tech.map((t) => (
+                        {proj.tech.map((t, j) => (
                           <span
-                            key={t}
+                            key={j}
                             className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded"
                           >
-                            {t}
+                            <EditableText
+                              value={t}
+                              onChange={(v) => updateProjTech(i, j, v)}
+                            />
                           </span>
                         ))}
                       </div>
@@ -386,24 +569,33 @@ export function ResumePreview({
             )}
 
             {/* Education */}
-            {resume.education.length > 0 && (
+            {localResume.education.length > 0 && (
               <div>
                 <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
                   Education
                 </h3>
                 <div className="space-y-2">
-                  {resume.education.map((edu, i) => (
-                    <div key={i} className="flex items-baseline justify-between">
+                  {localResume.education.map((edu, i) => (
+                    <div key={i} className="flex items-baseline justify-between gap-2">
                       <div>
                         <span className="text-sm font-medium">
-                          {edu.degree}
+                          <EditableText
+                            value={edu.degree}
+                            onChange={(v) => updateEduField(i, "degree", v)}
+                          />
                         </span>
                         <span className="text-xs text-muted-foreground ml-2">
-                          {edu.institution}
+                          <EditableText
+                            value={edu.institution}
+                            onChange={(v) => updateEduField(i, "institution", v)}
+                          />
                         </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {edu.year}
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        <EditableText
+                          value={edu.year}
+                          onChange={(v) => updateEduField(i, "year", v)}
+                        />
                       </span>
                     </div>
                   ))}

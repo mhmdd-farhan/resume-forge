@@ -1,6 +1,21 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import type { Resume, ContactInfo } from "./types";
 
+// pdf-lib StandardFonts only support Latin-1 (Windows-1252).
+// Replace common Unicode punctuation and strip anything outside that range.
+function sanitize(text: string): string {
+  return text
+    .replace(/[‘’`´]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[–—―]/g, "-")
+    .replace(/…/g, "...")
+    .replace(/•/g, "*")
+    .replace(/ /g, " ")
+    .replace(/\n+/g, " ")
+    .replace(/[^\x00-\xFF]/g, "")
+    .trim();
+}
+
 const COLORS = {
   black: rgb(0.1, 0.1, 0.12),
   dark: rgb(0.2, 0.2, 0.23),
@@ -58,7 +73,7 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
     const maxWidth = options.maxWidth || CONTENT_WIDTH;
 
     // Word-wrap text
-    const words = text.split(" ");
+    const words = sanitize(text).split(" ");
     const lines: string[] = [];
     let currentLine = "";
 
@@ -91,26 +106,19 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
     ensureSpace(30);
     yPos = y; // use updated y after ensureSpace
     yPos -= 6;
-    page.drawText(title.toUpperCase(), {
+    page.drawText(sanitize(title).toUpperCase(), {
       x: MARGIN_LEFT,
       y: yPos,
       size: 9,
       font: helveticaBold,
       color: COLORS.accent,
     });
-    yPos -= 7;
-    page.drawLine({
-      start: { x: MARGIN_LEFT, y: yPos },
-      end: { x: PAGE_WIDTH - MARGIN_RIGHT, y: yPos },
-      thickness: 0.5,
-      color: COLORS.line,
-    });
-    yPos -= 10;
+    yPos -= 18;
     return yPos;
   };
 
   // ─── NAME ───
-  page.drawText(resume.name, {
+  page.drawText(sanitize(resume.name), {
     x: MARGIN_LEFT,
     y: y,
     size: 22,
@@ -120,7 +128,7 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
   y -= 20;
 
   // ─── TITLE ───
-  page.drawText(resume.title, {
+  page.drawText(sanitize(resume.title), {
     x: MARGIN_LEFT,
     y: y,
     size: 11,
@@ -173,7 +181,7 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
       ensureSpace(40);
 
       // Role and Company
-      page.drawText(exp.role, {
+      page.drawText(sanitize(exp.role), {
         x: MARGIN_LEFT,
         y: y,
         size: 10,
@@ -181,8 +189,8 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
         color: COLORS.black,
       });
 
-      const durationWidth = helvetica.widthOfTextAtSize(exp.duration, 9);
-      page.drawText(exp.duration, {
+      const durationWidth = helvetica.widthOfTextAtSize(sanitize(exp.duration), 9);
+      page.drawText(sanitize(exp.duration), {
         x: PAGE_WIDTH - MARGIN_RIGHT - durationWidth,
         y: y,
         size: 9,
@@ -191,7 +199,7 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
       });
       y -= 14;
 
-      page.drawText(exp.company, {
+      page.drawText(sanitize(exp.company), {
         x: MARGIN_LEFT,
         y: y,
         size: 9,
@@ -220,7 +228,7 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
     for (const proj of resume.projects) {
       ensureSpace(40);
 
-      page.drawText(proj.name, {
+      page.drawText(sanitize(proj.name), {
         x: MARGIN_LEFT,
         y: y,
         size: 10,
@@ -264,7 +272,7 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
     for (const edu of resume.education) {
       ensureSpace(30);
 
-      page.drawText(edu.degree, {
+      page.drawText(sanitize(edu.degree), {
         x: MARGIN_LEFT,
         y: y,
         size: 10,
@@ -272,8 +280,8 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
         color: COLORS.black,
       });
 
-      const yearWidth = helvetica.widthOfTextAtSize(edu.year, 9);
-      page.drawText(edu.year, {
+      const yearWidth = helvetica.widthOfTextAtSize(sanitize(edu.year), 9);
+      page.drawText(sanitize(edu.year), {
         x: PAGE_WIDTH - MARGIN_RIGHT - yearWidth,
         y: y,
         size: 9,
@@ -282,7 +290,7 @@ export async function generateResumePDF(resume: Resume, contactInfo?: ContactInf
       });
       y -= 14;
 
-      page.drawText(edu.institution, {
+      page.drawText(sanitize(edu.institution), {
         x: MARGIN_LEFT,
         y: y,
         size: 9,

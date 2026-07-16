@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/next";
+import { AuthProvider } from "@/components/AuthProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,9 +25,10 @@ export default function RootLayout({
     <html lang="en" className={cn("font-sans antialiased", inter.variable)}>
       <body className="min-h-screen">
         <div className="gradient-mesh" />
-        {children}
+        <AuthProvider>{children}</AuthProvider>
         <Analytics />
       </body>
     </html>
   );
 }
+
