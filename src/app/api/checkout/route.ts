@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     // Initialize Polar client on sandbox since the access token is sandbox-scoped
     const polar = new Polar({
       accessToken: token,
-      server: "sandbox",
+      server: "production",
     });
 
     const checkout = await polar.checkouts.create({
