@@ -16,6 +16,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trackClick } from "@/lib/track";
 
 interface ProfileInputProps {
   githubUrl: string;
@@ -354,7 +355,7 @@ export function ProfileInput({
             Back
           </Button>
           <Button
-            onClick={onNext}
+            onClick={() => { trackClick("generate_resume"); onNext(); }}
             className="gap-2 px-6 rounded-xl h-10 font-medium transition-all duration-200"
           >
             Generate Resume

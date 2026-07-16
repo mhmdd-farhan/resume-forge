@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Anvil,
   ArrowRight,
@@ -14,10 +14,13 @@ import {
   Target,
   GraduationCap,
   Zap,
+  Menu,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { trackClick } from "@/lib/track";
 
 // Framer motion animation variants
 const fadeInUp = {
@@ -40,8 +43,10 @@ const hoverCardEffect = {
 export default function LandingPage() {
   const { data: session, status } = useSession();
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSubscribe = async (planType: "premium" | "annual") => {
+    trackClick(`subscribe_${planType}`);
     if (!session) {
       signIn("google");
       return;
@@ -106,15 +111,15 @@ export default function LandingPage() {
             </span>
           </Link>
 
-          {/* Navigation Links & Action */}
-          <div className="flex items-center gap-4 sm:gap-6">
+          {/* Desktop Nav */}
+          <div className="hidden sm:flex items-center gap-6">
             <Link
               href="#pricing"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               Pricing
             </Link>
-            
+
             {status === "loading" ? (
               <span className="text-xs text-muted-foreground">Loading...</span>
             ) : session ? (
@@ -154,7 +159,90 @@ export default function LandingPage() {
               </>
             )}
           </div>
+
+          {/* Mobile: avatar (if logged in) + burger */}
+          <div className="flex sm:hidden items-center gap-2">
+            {session?.user?.image && (
+              <img
+                src={session.user.image}
+                alt={session.user.name || "User"}
+                className="w-7 h-7 rounded-full border border-border shadow-sm"
+              />
+            )}
+            <button
+              onClick={() => setMobileMenuOpen((o) => !o)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-secondary/50 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.22, ease: "easeInOut" }}
+              className="sm:hidden overflow-hidden border-t border-border/30 bg-background/95 backdrop-blur-md"
+            >
+              <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
+                <Link
+                  href="#pricing"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-all"
+                >
+                  Pricing
+                </Link>
+
+                {status !== "loading" && !session && (
+                  <>
+                    <button
+                      onClick={() => { signIn("google"); setMobileMenuOpen(false); }}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-all text-left"
+                    >
+                      Sign In
+                    </button>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 mt-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+                    >
+                      Get Started
+                    </Link>
+                  </>
+                )}
+
+                {status !== "loading" && session && (
+                  <>
+                    <div className="px-3 py-2 flex items-center gap-2">
+                      <span className="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        {(session.user as any).plan || "free"} plan
+                      </span>
+                      <span className="text-sm text-muted-foreground truncate">{session.user?.name}</span>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-all"
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-all text-left"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.header>
 
       {/* 2. Hero Section */}
@@ -194,7 +282,7 @@ export default function LandingPage() {
               size="lg"
               className="w-full py-2 sm:w-auto gap-2 rounded-xl h-11.5 font-medium shadow-md shadow-primary/15 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
             >
-              <Link href="/dashboard">
+              <Link href="/dashboard" onClick={() => trackClick("cta_generate_hero")}>
                 Generate My Resume
                 <ArrowRight className="w-4 h-4" />
               </Link>
@@ -217,7 +305,7 @@ export default function LandingPage() {
           transition={{ delay: 0.4, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="w-full max-w-5xl mx-auto mt-16 md:mt-20 z-10"
         >
-          <div className="relative rounded-2xl border border-border/60 bg-card/65 backdrop-blur-md shadow-2xl overflow-hidden aspect-[16/10] sm:aspect-[16/9.5] md:aspect-[16/9]">
+          <div className="relative rounded-2xl border border-border/60 bg-card/65 backdrop-blur-md shadow-2xl overflow-hidden aspect-[3/4] sm:aspect-[16/9.5] md:aspect-[16/9]">
             {/* Browser Header Bar */}
             <div className="h-11 border-b border-border/40 bg-muted/40 px-4 flex items-center justify-between select-none">
               <div className="flex items-center gap-2">
@@ -232,9 +320,9 @@ export default function LandingPage() {
             </div>
 
             {/* Application Mockup Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-5 h-[calc(100%-2.75rem)] divide-y md:divide-y-0 md:divide-x divide-border/40 bg-background/30 text-card-foreground">
-              {/* Form Input Mockup (Left 2 Columns) */}
-              <div className="md:col-span-2 p-4 sm:p-6 space-y-4 overflow-hidden flex flex-col justify-start">
+            <div className="grid grid-cols-1 md:grid-cols-5 h-[calc(100%-2.75rem)] md:divide-x divide-border/40 bg-background/30 text-card-foreground">
+              {/* Form Input Mockup — hidden on mobile, shown on md+ */}
+              <div className="hidden md:flex md:col-span-2 p-6 space-y-4 overflow-hidden flex-col justify-start">
                 <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wide">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   <span>Profile Wizard</span>
@@ -262,8 +350,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Resume Output Mockup (Right 3 Columns) */}
-              <div className="md:col-span-3 p-4 sm:p-6 bg-card/25 backdrop-blur-sm overflow-hidden flex flex-col relative justify-start">
+              {/* Resume Output Mockup — full width on mobile, 3 cols on md+ */}
+              <div className="col-span-1 md:col-span-3 p-4 sm:p-6 bg-card/25 backdrop-blur-sm overflow-hidden flex flex-col relative justify-start">
                 {/* ATS Score Indicator */}
                 <div className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-background/80 border border-border/50 shadow-sm rounded-xl px-3 py-1.5 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary flex items-center justify-center font-bold text-xs text-primary">
@@ -334,7 +422,7 @@ export default function LandingPage() {
       </section>
 
       {/* 3. Trusted by Students & Fresh Graduates */}
-      <section className="w-full py-20 bg-muted/20 border-y border-border/30 px-6">
+      <section className="w-full py-12 sm:py-20 bg-muted/20 border-y border-border/30 px-6">
         <div className="max-w-6xl mx-auto space-y-12">
           {/* Header */}
           <div className="text-center space-y-3">
@@ -347,7 +435,7 @@ export default function LandingPage() {
           </div>
 
           {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {/* Card 1 */}
             <motion.div variants={hoverCardEffect} whileHover="hover" className="h-full">
               <Card className="border border-border/40 bg-card/50 backdrop-blur-sm rounded-2xl h-full flex flex-col transition-all">

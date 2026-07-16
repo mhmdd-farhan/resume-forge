@@ -45,7 +45,7 @@ export function JobInput({ value, onChange, onNext }: JobInputProps) {
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Paste the full job description here — including role title, requirements, responsibilities, and preferred qualifications..."
-            className="relative w-full h-56 resize-none rounded-xl border border-border bg-card/80 backdrop-blur-sm px-5 py-4 text-sm leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all duration-200"
+            className="relative w-full h-40 sm:h-56 resize-none rounded-xl border border-border bg-card/80 backdrop-blur-sm px-5 py-4 text-sm leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all duration-200"
             autoFocus
           />
         </div>

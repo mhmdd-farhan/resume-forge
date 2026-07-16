@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { trackClick } from "@/lib/track";
 import {
   Download,
   RefreshCw,
@@ -270,7 +271,7 @@ export function ResumePreview({
           className="lg:col-span-1 space-y-6"
         >
           {/* Overall Score */}
-          <div className="glass rounded-2xl p-6 space-y-4">
+          <div className="glass rounded-2xl p-4 sm:p-6 space-y-4">
             <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Match Score
             </div>
@@ -317,7 +318,7 @@ export function ResumePreview({
           {/* Action Buttons */}
           <div className="space-y-2">
             <Button
-              onClick={onDownload}
+              onClick={() => { trackClick("download_pdf"); onDownload(); }}
               disabled={isDownloading}
               className="w-full gap-2 rounded-xl h-11 font-medium"
             >
@@ -326,7 +327,7 @@ export function ResumePreview({
             </Button>
             <Button
               variant="outline"
-              onClick={onRegenerate}
+              onClick={() => { trackClick("regenerate_resume"); onRegenerate(); }}
               className="w-full gap-2 rounded-xl h-11 font-medium"
             >
               <RefreshCw className="w-4 h-4" />
@@ -346,7 +347,7 @@ export function ResumePreview({
           transition={{ delay: 0.3 }}
           className="lg:col-span-2"
         >
-          <div className="glass rounded-2xl p-8 space-y-5 relative overflow-hidden">
+          <div className="glass rounded-2xl p-4 sm:p-8 space-y-5 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
 
             {/* Header */}

@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { trackClick } from "@/lib/track";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { JobInput } from "@/components/JobInput";
@@ -750,7 +751,7 @@ export default function DashboardPage() {
       <main className="min-h-screen flex flex-col">
         {/* Header */}
         <header className="w-full border-b border-border/40 backdrop-blur-md bg-background/70 sticky top-0 z-50">
-          <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 group">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-sm shadow-primary/20 group-hover:scale-105 transition-transform duration-200">
@@ -765,7 +766,7 @@ export default function DashboardPage() {
                 <button
                   key={tab.id}
                   id={`tab-${tab.id}`}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => { setActiveTab(tab.id); trackClick(`tab_${tab.id}`); }}
                   className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
                     activeTab === tab.id
                       ? "bg-background text-foreground shadow-sm border border-border/30"
@@ -828,7 +829,7 @@ export default function DashboardPage() {
         </AnimatePresence>
 
         {/* Main content */}
-        <div className="flex-1 w-full max-w-5xl mx-auto px-6 py-8">
+        <div className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <AnimatePresence mode="wait">
             {activeTab === "generate" && (
               <motion.div

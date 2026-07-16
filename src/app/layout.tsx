@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
+import { PageTracker } from "@/components/PageTracker";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,6 +26,7 @@ export default function RootLayout({
     <html lang="en" className={cn("font-sans antialiased", inter.variable)}>
       <body className="min-h-screen">
         <div className="gradient-mesh" />
+        <PageTracker />
         <AuthProvider>{children}</AuthProvider>
         <Analytics />
       </body>

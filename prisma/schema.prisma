@@ -55,3 +55,21 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+}
+
+model ClickEvent {
+  id        String   @id @default(cuid())
+  event     String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([event])
+}
