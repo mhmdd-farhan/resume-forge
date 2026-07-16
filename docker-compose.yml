@@ -2,6 +2,8 @@ services:
   adminer:
     image: adminer
     restart: always
+    networks:
+      - forge_network
     ports:
       - 8080:8080
 
@@ -15,6 +17,8 @@ services:
       POSTGRES_DB: resumeforge
     ports:
       - "5432:5432"
+    networks:
+      - forge_network
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -43,9 +47,18 @@ services:
       - N8N_BASIC_AUTH=${N8N_BASIC_AUTH}
       - NEXT_PUBLIC_POLAR_PREMIUM_PRODUCT_ID=${NEXT_PUBLIC_POLAR_PREMIUM_PRODUCT_ID}
       - NEXT_PUBLIC_POLAR_ANNUAL_PRODUCT_ID=${NEXT_PUBLIC_POLAR_ANNUAL_PRODUCT_ID}
+    networks:
+      - forge_network
+      - nginx-proxy
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   postgres_data:
+
+networks:
+  forge_network:
+    driver: bridge
+  nginx-proxy:
+    external: true
