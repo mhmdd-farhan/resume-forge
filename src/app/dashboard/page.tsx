@@ -22,7 +22,7 @@ import {
   AlertTriangle,
   X,
 } from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { trackClick } from "@/lib/track";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
