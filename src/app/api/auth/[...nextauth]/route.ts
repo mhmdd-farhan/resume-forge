@@ -15,6 +15,43 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  cookies: {
+    state: {
+      name: "next-auth.state",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+    pkceCodeVerifier: {
+      name: "next-auth.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+    callbackUrl: {
+      name: "__Secure-next-auth.callback-url",
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+    sessionToken: {
+      name: "__Secure-next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
