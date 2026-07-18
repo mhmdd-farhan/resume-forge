@@ -555,10 +555,6 @@ export default function LandingPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-primary shrink-0" />
-                      <span>Multiple templates</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-primary shrink-0" />
                       <span>PDF Export</span>
                     </li>
                   </ul>
@@ -588,10 +584,6 @@ export default function LandingPage() {
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-teal-500 shrink-0" />
                       <span>ATS-friendly resume</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-teal-500 shrink-0" />
-                      <span>Multiple templates</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-teal-500 shrink-0" />
