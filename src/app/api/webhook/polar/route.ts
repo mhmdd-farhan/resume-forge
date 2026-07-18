@@ -1,11 +1,14 @@
 import { Webhooks } from "@polar-sh/nextjs";
 import { prisma } from "@/lib/prisma";
 
-// Polar subscription statuses that mean the user has active access
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
-
-// Statuses that mean access should be revoked immediately
 const REVOKED_STATUSES = new Set(["canceled", "revoked", "past_due", "unpaid", "incomplete_expired"]);
+
+function resolvePlan(productId: string): "starter" | "annual" | "premium" {
+  if (productId === process.env.NEXT_PUBLIC_POLAR_ANNUAL_PRODUCT_ID) return "annual";
+  if (productId === process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_ID) return "starter";
+  return "premium";
+}
 
 export const POST = Webhooks({
   webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
@@ -21,12 +24,8 @@ export const POST = Webhooks({
     const customerEmail =
       subscription.customerEmail || subscription.customer?.email;
 
-    // Resolve the plan from product ID
-    const isAnnual =
-      subscription.productId === process.env.NEXT_PUBLIC_POLAR_ANNUAL_PRODUCT_ID;
-    const paidPlan = isAnnual ? "annual" : "premium";
+    const paidPlan = resolvePlan(subscription.productId);
 
-    // Find user by userId metadata first, fall back to email
     let user = null;
     if (userId) {
       user = await prisma.user.findUnique({ where: { id: userId } });
@@ -50,7 +49,6 @@ export const POST = Webhooks({
       type === "subscription.updated"
     ) {
       if (ACTIVE_STATUSES.has(status)) {
-        // Grant access
         await prisma.user.update({
           where: { id: user.id },
           data: {
@@ -63,7 +61,6 @@ export const POST = Webhooks({
           `[Polar Webhook] User ${user.id} upgraded to ${paidPlan} (status: ${status})`
         );
       } else if (REVOKED_STATUSES.has(status)) {
-        // Subscription went into a bad state (past_due, unpaid, etc.) — revoke access
         await prisma.user.update({
           where: { id: user.id },
           data: {
@@ -79,7 +76,6 @@ export const POST = Webhooks({
       type === "subscription.canceled" ||
       type === "subscription.revoked"
     ) {
-      // Explicit cancel/revoke — immediately revoke access
       await prisma.user.update({
         where: { id: user.id },
         data: {

@@ -11,6 +11,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
+const STARTER_DAILY_LIMIT = 4;
+const FREE_TOTAL_LIMIT = 3;
+
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export async function generateResume(
   formData: FormData,
 ): Promise<
@@ -27,27 +34,42 @@ export async function generateResume(
     // Always read fresh from DB — never trust JWT for billing-critical checks
     const dbUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { plan: true, resumesGenerated: true, polarSubscriptionId: true },
+      select: {
+        plan: true,
+        resumesGenerated: true,
+        dailyResumesGenerated: true,
+        lastGenerationDate: true,
+        polarSubscriptionId: true,
+      },
     });
 
     if (!dbUser) {
       return { success: false, error: "User session not found in database." };
     }
 
-    // Determine effective plan:
-    // If plan is premium/annual but there's no linked subscription ID,
-    // the subscription was likely revoked — treat as free
-    const isPaidPlan = dbUser.plan === "premium" || dbUser.plan === "annual";
-    const hasValidSubscription = isPaidPlan && !!dbUser.polarSubscriptionId;
-    const effectivePlan: string = hasValidSubscription ? dbUser.plan : "free";
+    const hasValidSubscription = !!dbUser.polarSubscriptionId;
+    const isStarter = dbUser.plan === "starter" && hasValidSubscription;
+    const isPaid = (dbUser.plan === "premium" || dbUser.plan === "annual") && hasValidSubscription;
+    const effectivePlan: string = isPaid ? dbUser.plan : isStarter ? "starter" : "free";
 
-    // Free tier limit: 3 generations maximum
-    if (effectivePlan === "free" && dbUser.resumesGenerated >= 3) {
+    if (effectivePlan === "free" && dbUser.resumesGenerated >= FREE_TOTAL_LIMIT) {
       return {
         success: false,
-        error:
-          "You have reached the limit of 3 free resume generations. Please upgrade to a Premium plan for unlimited access.",
+        error: `You have reached the limit of ${FREE_TOTAL_LIMIT} free resume generations. Upgrade to Starter or Premium for more access.`,
       };
+    }
+
+    if (effectivePlan === "starter") {
+      const today = todayUtc();
+      const isNewDay = dbUser.lastGenerationDate !== today;
+      const dailyUsed = isNewDay ? 0 : dbUser.dailyResumesGenerated;
+
+      if (dailyUsed >= STARTER_DAILY_LIMIT) {
+        return {
+          success: false,
+          error: `You've used all ${STARTER_DAILY_LIMIT} daily CV generations. Your limit resets at midnight UTC. Upgrade to Premium for unlimited access.`,
+        };
+      }
     }
 
     const raw = {
@@ -82,14 +104,11 @@ export async function generateResume(
       portfolioUrl,
     } = parsed.data;
 
-    // Parse repo URLs from comma-separated string
-    // Use ?? to safely handle undefined (preprocess converts "" to undefined)
     const repoUrls = (githubRepoUrls ?? "")
       .split(",")
       .map((u) => u.trim())
       .filter((u) => u.length > 0);
 
-    // Parse profiles and repos in parallel
     const [githubProfile, githubRepos, linkedinProfile] = await Promise.all([
       githubUrl ? parseGitHubProfile(githubUrl) : null,
       repoUrls.length > 0 ? parseGitHubRepos(repoUrls) : Promise.resolve([]),
@@ -103,7 +122,6 @@ export async function generateResume(
       ),
     ]);
 
-    // Generate resume with AI
     const result = await generateResumeWithAI({
       jobDescription,
       githubProfile,
@@ -121,13 +139,15 @@ export async function generateResume(
       portfolioUrl: portfolioUrl ?? undefined,
     };
 
-    // Increment user resume generation count on success
+    const today = todayUtc();
+    const isNewDay = dbUser.lastGenerationDate !== today;
+
     await prisma.user.update({
       where: { id: userId },
       data: {
-        resumesGenerated: {
-          increment: 1,
-        },
+        resumesGenerated: { increment: 1 },
+        dailyResumesGenerated: isNewDay ? 1 : { increment: 1 },
+        lastGenerationDate: today,
       },
     });
 
@@ -140,4 +160,3 @@ export async function generateResume(
     };
   }
 }
-

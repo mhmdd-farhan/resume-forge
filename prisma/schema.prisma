@@ -40,10 +40,12 @@ model User {
   email               String?   @unique
   emailVerified       DateTime?
   image               String?
-  plan                String    @default("free")
-  resumesGenerated    Int       @default(0)
-  polarCustomerId     String?
-  polarSubscriptionId String?
+  plan                  String    @default("free")
+  resumesGenerated      Int       @default(0)
+  dailyResumesGenerated Int       @default(0)
+  lastGenerationDate    String?
+  polarCustomerId       String?
+  polarSubscriptionId   String?
   accounts            Account[]
   sessions            Session[]
 }

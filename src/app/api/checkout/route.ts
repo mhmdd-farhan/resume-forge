@@ -13,9 +13,13 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const { planType } = body;
 
-    let productId = process.env.NEXT_PUBLIC_POLAR_PREMIUM_PRODUCT_ID;
-    if (planType === "annual") {
+    let productId: string | undefined;
+    if (planType === "starter") {
+      productId = process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_ID;
+    } else if (planType === "annual") {
       productId = process.env.NEXT_PUBLIC_POLAR_ANNUAL_PRODUCT_ID;
+    } else {
+      productId = process.env.NEXT_PUBLIC_POLAR_PREMIUM_PRODUCT_ID;
     }
 
     if (!productId) {
@@ -27,7 +31,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Polar access token is missing." }, { status: 500 });
     }
 
-    // Initialize Polar client on sandbox since the access token is sandbox-scoped
     const polar = new Polar({
       accessToken: token,
       server: "production",

@@ -44,13 +44,17 @@ interface DashboardData {
   image: string;
   plan: string;
   resumesGenerated: number;
+  dailyUsed: number;
   remaining: number | null;
+  limitPeriod: "total" | "daily" | null;
   isPremium: boolean;
+  isStarter: boolean;
   hasSubscription: boolean;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const FREE_LIMIT = 3;
+const STARTER_DAILY_LIMIT = 4;
 
 // ─── Cancel Confirmation Modal ────────────────────────────────────────────────
 function CancelModal({
@@ -160,6 +164,11 @@ function PlanBadge({ plan }: { plan: string }) {
       className: "bg-secondary/70 text-secondary-foreground border-border/40",
       icon: null,
     },
+    starter: {
+      label: "Starter",
+      className: "bg-teal-500/10 text-teal-600 border-teal-500/30",
+      icon: <Zap className="w-3 h-3" />,
+    },
     premium: {
       label: "Premium",
       className: "bg-primary/10 text-primary border-primary/30",
@@ -182,7 +191,15 @@ function PlanBadge({ plan }: { plan: string }) {
   );
 }
 
-function UsageMeter({ used, limit }: { used: number; limit: number | null }) {
+function UsageMeter({
+  used,
+  limit,
+  period = "total",
+}: {
+  used: number;
+  limit: number | null;
+  period?: "total" | "daily";
+}) {
   if (limit === null) {
     return (
       <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium">
@@ -194,10 +211,16 @@ function UsageMeter({ used, limit }: { used: number; limit: number | null }) {
   const pct = Math.min((used / limit) * 100, 100);
   const isWarning = pct >= 66;
   const isDanger = pct >= 100;
+  const barColor = period === "daily"
+    ? isDanger ? "bg-destructive" : isWarning ? "bg-amber-500" : "bg-teal-500"
+    : isDanger ? "bg-destructive" : isWarning ? "bg-amber-500" : "bg-primary";
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground font-medium">CV Generations used</span>
+        <span className="text-muted-foreground font-medium">
+          {period === "daily" ? "Today's CV Generations" : "CV Generations used"}
+        </span>
         <span
           className={`font-bold tabular-nums ${
             isDanger ? "text-destructive" : isWarning ? "text-amber-600" : "text-foreground"
@@ -211,17 +234,25 @@ function UsageMeter({ used, limit }: { used: number; limit: number | null }) {
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className={`h-full rounded-full ${
-            isDanger ? "bg-destructive" : isWarning ? "bg-amber-500" : "bg-primary"
-          }`}
+          className={`h-full rounded-full ${barColor}`}
         />
       </div>
-      {isDanger && (
+      {isDanger && period === "daily" && (
+        <p className="text-xs text-destructive font-medium flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" /> Daily limit reached. Resets at midnight UTC.
+        </p>
+      )}
+      {isDanger && period === "total" && (
         <p className="text-xs text-destructive font-medium flex items-center gap-1">
           <AlertCircle className="w-3 h-3" /> Limit reached. Upgrade to keep generating.
         </p>
       )}
-      {!isDanger && (
+      {!isDanger && period === "daily" && (
+        <p className="text-xs text-muted-foreground">
+          {limit - used} generation{limit - used !== 1 ? "s" : ""} remaining today · resets midnight UTC
+        </p>
+      )}
+      {!isDanger && period === "total" && (
         <p className="text-xs text-muted-foreground">
           {limit - used} generation{limit - used !== 1 ? "s" : ""} remaining on free plan
         </p>
@@ -238,7 +269,7 @@ function DashboardTab({
 }: {
   data: DashboardData | null;
   loading: boolean;
-  onUpgrade: (plan: "premium" | "annual") => void;
+  onUpgrade: (plan: "starter" | "premium" | "annual") => void;
   onCancelRequest: () => void;
 }) {
   if (!data) {
@@ -251,6 +282,7 @@ function DashboardTab({
   }
 
   const isPremium = data.isPremium;
+  const isStarter = data.isStarter;
 
   return (
     <motion.div
@@ -357,13 +389,57 @@ function DashboardTab({
             Generation Usage
           </CardTitle>
           <CardDescription className="text-xs">
-            Track how many AI CV generations you've used
+            {isStarter ? "Daily AI CV generations (resets midnight UTC)" : "Track how many AI CV generations you've used"}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          <UsageMeter used={data.resumesGenerated} limit={isPremium ? null : FREE_LIMIT} />
+          <UsageMeter
+            used={isStarter ? data.dailyUsed : data.resumesGenerated}
+            limit={isPremium ? null : isStarter ? STARTER_DAILY_LIMIT : FREE_LIMIT}
+            period={isStarter ? "daily" : "total"}
+          />
         </CardContent>
       </Card>
+
+      {/* ─── Starter Active + Manage Subscription ───────────────────────── */}
+      {isStarter && (
+        <Card className="border border-teal-500/30 bg-teal-500/5 rounded-2xl overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-teal-500/15 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-5 h-5 text-teal-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground text-sm">Starter Plan Active</p>
+                  <p className="text-xs text-muted-foreground">
+                    {STARTER_DAILY_LIMIT} CV generations per day — resets at midnight UTC
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  onClick={() => onUpgrade("premium")}
+                  size="sm"
+                  className="rounded-xl text-xs gap-1.5"
+                >
+                  <Crown className="w-3 h-3" />
+                  Upgrade to Premium
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onCancelRequest}
+                  className="rounded-xl text-xs border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive hover:border-destructive/50 transition-all"
+                >
+                  <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ─── Premium Active + Manage Subscription ───────────────────────── */}
       {isPremium && (
@@ -383,8 +459,6 @@ function DashboardTab({
                   </p>
                 </div>
               </div>
-
-              {/* Manage subscription */}
               <div className="flex items-center gap-2 shrink-0">
                 <Button
                   variant="outline"
@@ -402,7 +476,7 @@ function DashboardTab({
       )}
 
       {/* ─── Upgrade CTA — free users only ──────────────────────────────── */}
-      {!isPremium && (
+      {!isPremium && !isStarter && (
         <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-card to-card rounded-2xl overflow-hidden relative">
           <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
           <CardContent className="p-6">
@@ -411,19 +485,27 @@ function DashboardTab({
                 <Crown className="w-6 h-6 text-primary" />
               </div>
               <div className="flex-1 space-y-1">
-                <h3 className="font-bold text-foreground">Unlock unlimited generations</h3>
+                <h3 className="font-bold text-foreground">Unlock more generations</h3>
                 <p className="text-sm text-muted-foreground">
                   You're on the free plan ({data.resumesGenerated}/{FREE_LIMIT} used). Upgrade for
-                  unlimited AI-powered CV generation, PDF export & priority support.
+                  more daily CV generations or go unlimited with Premium.
                 </p>
               </div>
               <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+                <Button
+                  onClick={() => onUpgrade("starter")}
+                  variant="outline"
+                  className="w-full sm:w-auto gap-2 rounded-xl border-teal-500/50 text-teal-600 hover:bg-teal-500/5 transition-all text-xs"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  Starter — $1/mo · 4/day
+                </Button>
                 <Button
                   onClick={() => onUpgrade("premium")}
                   className="w-full sm:w-auto gap-2 rounded-xl shadow-md shadow-primary/15 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  Upgrade — $5/mo
+                  Premium — $5/mo · Unlimited
                 </Button>
                 <Button
                   variant="outline"
@@ -671,7 +753,7 @@ export default function DashboardPage() {
     }
   }, [activeTab, dashboardData, status]);
 
-  const handleUpgrade = async (planType: "premium" | "annual") => {
+  const handleUpgrade = async (planType: "starter" | "premium" | "annual") => {
     if (!session) return;
     setCheckoutLoading(planType);
     try {

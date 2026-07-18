@@ -18,6 +18,7 @@ async function getStats() {
     totalUsers,
     premiumUsers,
     annualUsers,
+    starterUsers,
     resumeAgg,
     topGenerators,
     recentUsers,
@@ -31,6 +32,7 @@ async function getStats() {
     prisma.user.count(),
     prisma.user.count({ where: { plan: "premium" } }),
     prisma.user.count({ where: { plan: "annual" } }),
+    prisma.user.count({ where: { plan: "starter" } }),
     prisma.user.aggregate({ _sum: { resumesGenerated: true } }),
     prisma.user.findMany({
       where: { resumesGenerated: { gt: 0 } },
@@ -68,8 +70,8 @@ async function getStats() {
     }),
   ]);
 
-  const freeUsers = totalUsers - premiumUsers - annualUsers;
-  const activeSubscribers = premiumUsers + annualUsers;
+  const freeUsers = totalUsers - premiumUsers - annualUsers - starterUsers;
+  const activeSubscribers = premiumUsers + annualUsers + starterUsers;
   const totalResumes = resumeAgg._sum.resumesGenerated ?? 0;
 
   // Build 7-day series
@@ -100,7 +102,7 @@ async function getStats() {
   }));
 
   return {
-    totalUsers, freeUsers, premiumUsers, annualUsers, activeSubscribers,
+    totalUsers, freeUsers, premiumUsers, annualUsers, starterUsers, activeSubscribers,
     totalResumes, topGenerators, recentUsers,
     totalPageViews, totalClicks,
     topPages, topClicks, series,
@@ -109,6 +111,7 @@ async function getStats() {
 
 const PLAN_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   free: { label: "Free", color: "text-muted-foreground", bg: "bg-secondary/60" },
+  starter: { label: "Starter", color: "text-teal-600", bg: "bg-teal-500/10" },
   premium: { label: "Premium", color: "text-primary", bg: "bg-primary/10" },
   annual: { label: "Annual", color: "text-amber-600", bg: "bg-amber-500/10" },
 };
@@ -157,7 +160,7 @@ export default async function AdminPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Total Users", value: s.totalUsers, icon: Users, color: "text-primary", bg: "bg-primary/10", sub: `${s.freeUsers} free` },
-            { label: "Subscribers", value: s.activeSubscribers, icon: Crown, color: "text-amber-600", bg: "bg-amber-500/10", sub: `${s.premiumUsers} premium · ${s.annualUsers} annual` },
+            { label: "Subscribers", value: s.activeSubscribers, icon: Crown, color: "text-amber-600", bg: "bg-amber-500/10", sub: `${s.starterUsers} starter · ${s.premiumUsers} premium · ${s.annualUsers} annual` },
             { label: "Resumes Made", value: s.totalResumes, icon: FileText, color: "text-emerald-600", bg: "bg-emerald-500/10", sub: `${s.totalUsers > 0 ? (s.totalResumes / s.totalUsers).toFixed(1) : 0} avg/user` },
             { label: "Conversion", value: s.totalUsers > 0 ? `${((s.activeSubscribers / s.totalUsers) * 100).toFixed(1)}%` : "0%", icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-500/10", sub: `${s.activeSubscribers} paid of ${s.totalUsers}` },
           ].map((c) => (
@@ -297,10 +300,11 @@ export default async function AdminPage() {
             </div>
             <div className="space-y-3">
               {[
-                { plan: "free", count: s.freeUsers, icon: Activity },
-                { plan: "premium", count: s.premiumUsers, icon: Crown },
-                { plan: "annual", count: s.annualUsers, icon: Star },
-              ].map(({ plan, count, icon: Icon }) => {
+                { plan: "free", count: s.freeUsers, icon: Activity, bar: "bg-muted-foreground/40" },
+                { plan: "starter", count: s.starterUsers, icon: Zap, bar: "bg-teal-500" },
+                { plan: "premium", count: s.premiumUsers, icon: Crown, bar: "bg-primary" },
+                { plan: "annual", count: s.annualUsers, icon: Star, bar: "bg-amber-500" },
+              ].map(({ plan, count, icon: Icon, bar }) => {
                 const cfg = PLAN_CONFIG[plan];
                 const pct = s.totalUsers > 0 ? (count / s.totalUsers) * 100 : 0;
                 return (
@@ -314,10 +318,7 @@ export default async function AdminPage() {
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${plan === "free" ? "bg-muted-foreground/40" : plan === "premium" ? "bg-primary" : "bg-amber-500"}`}
-                        style={{ width: `${pct}%` }}
-                      />
+                      <div className={`h-full rounded-full ${bar}`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );

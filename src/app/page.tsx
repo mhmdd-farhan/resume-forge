@@ -45,7 +45,7 @@ export default function LandingPage() {
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleSubscribe = async (planType: "premium" | "annual") => {
+  const handleSubscribe = async (planType: "starter" | "premium" | "annual") => {
     trackClick(`subscribe_${planType}`);
     if (!session) {
       signIn("google");
@@ -532,7 +532,7 @@ export default function LandingPage() {
           </div>
 
           {/* Pricing Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto items-stretch">
             {/* FREE Tier */}
             <motion.div variants={hoverCardEffect} whileHover="hover" className="h-full flex">
               <Card className="border border-border/40 bg-card/60 backdrop-blur-sm rounded-2xl h-full flex flex-col justify-between overflow-hidden relative w-full">
@@ -547,7 +547,7 @@ export default function LandingPage() {
                   <ul className="space-y-3 text-xs text-muted-foreground font-medium mb-8">
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-primary shrink-0" />
-                      <span>Generate up to 3 resumes</span>
+                      <span>3 resumes total</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-primary shrink-0" />
@@ -564,6 +564,47 @@ export default function LandingPage() {
                   </ul>
                   <Button asChild variant="outline" className="w-full rounded-xl hover:scale-[1.01] transition-transform">
                     <Link href="/generate">Get Started</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* STARTER Tier */}
+            <motion.div variants={hoverCardEffect} whileHover="hover" className="h-full flex">
+              <Card className="border border-teal-500/40 bg-card/60 backdrop-blur-sm rounded-2xl h-full flex flex-col justify-between overflow-hidden relative w-full">
+                <CardHeader className="space-y-1.5 p-6 pb-4">
+                  <div className="text-xs font-bold tracking-widest text-teal-600 uppercase">STARTER</div>
+                  <div className="flex items-baseline gap-1 mt-1">
+                    <span className="text-4xl font-extrabold text-foreground">$1</span>
+                    <span className="text-xs text-muted-foreground font-medium">/month</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 pt-0 flex-1 flex flex-col justify-between">
+                  <ul className="space-y-3 text-xs text-muted-foreground font-medium mb-8">
+                    <li className="flex items-center gap-2 text-foreground/90 font-semibold">
+                      <Check className="w-4 h-4 text-teal-500 shrink-0" />
+                      <span>4 resumes per day</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-teal-500 shrink-0" />
+                      <span>ATS-friendly resume</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-teal-500 shrink-0" />
+                      <span>Multiple templates</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-teal-500 shrink-0" />
+                      <span>PDF Export</span>
+                    </li>
+                  </ul>
+                  <Button
+                    onClick={() => handleSubscribe("starter")}
+                    disabled={loadingCheckout !== null}
+                    variant="outline"
+                    className="w-full rounded-xl border-teal-500/50 text-teal-600 hover:bg-teal-500/5 hover:scale-[1.01] active:scale-[0.99] transition-all"
+                  >
+                    {loadingCheckout === "starter" ? "Loading..." : (session && (session.user as any).plan === "starter" ? "Active Plan" : "Get Starter")}
                   </Button>
                 </CardContent>
               </Card>
@@ -589,7 +630,7 @@ export default function LandingPage() {
                   <ul className="space-y-3 text-xs text-muted-foreground font-medium mb-8">
                     <li className="flex items-center gap-2 text-foreground/90 font-semibold">
                       <Check className="w-4 h-4 text-primary shrink-0" />
-                      <span>Unlimited resume generation</span>
+                      <span>Unlimited generations</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-primary shrink-0" />
