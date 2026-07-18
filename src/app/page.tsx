@@ -563,7 +563,7 @@ export default function LandingPage() {
                     </li>
                   </ul>
                   <Button asChild variant="outline" className="w-full rounded-xl hover:scale-[1.01] transition-transform">
-                    <Link href="/generate">Get Started</Link>
+                    <Link href="/dashboard">Get Started</Link>
                   </Button>
                 </CardContent>
               </Card>

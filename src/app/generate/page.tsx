@@ -37,7 +37,7 @@ export default function Home() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    router.push("/")
+    router.push("/dashboard")
   }, [])
 
   const handleGenerate = useCallback(async () => {

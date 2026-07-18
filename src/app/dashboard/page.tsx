@@ -736,10 +736,10 @@ export default function DashboardPage() {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccess, setCancelSuccess] = useState(false);
 
-  // Redirect unauthenticated users
+  // Redirect unauthenticated users to Google login
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/");
-  }, [status, router]);
+    if (status === "unauthenticated") signIn("google", { callbackUrl: "/dashboard" });
+  }, [status]);
 
   // Fetch dashboard data when tab is opened
   useEffect(() => {
