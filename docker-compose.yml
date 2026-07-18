@@ -1,28 +1,19 @@
 services:
-  adminer:
-    image: adminer
-    restart: always
-    networks:
-      - forge_network
-    ports:
-      - 8080:8080
-
   db:
     image: postgres:16
     container_name: resumeforge-db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: resumeforge
-    ports:
-      - "5432:5432"
+    # TIDAK expose port 5432 ke host — hanya accessible dalam Docker network
     networks:
       - forge_network
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d resumeforge"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d resumeforge"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -36,7 +27,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/resumeforge?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/resumeforge?schema=public
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
