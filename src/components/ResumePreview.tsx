@@ -14,6 +14,7 @@ import {
   Phone,
   MapPin,
   Pencil,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,19 @@ interface ResumePreviewProps {
   onRegenerate: () => void;
   onResumeChange?: (resume: Resume) => void;
   isDownloading: boolean;
+}
+
+
+function DeleteButton({ onClick, title }: { onClick: () => void; title?: string }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      title={title ?? "Delete"}
+      className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-4 h-4 flex items-center justify-center rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive"
+    >
+      <X className="w-2.5 h-2.5" />
+    </button>
+  );
 }
 
 function EditableText({
@@ -79,7 +93,7 @@ function EditableText({
             }
           }}
           className={`${baseClass} resize-none`}
-          rows={Math.max(2, draft.split("\n").length)}
+          rows={Math.max(2, draft.split("\n").length + 1)}
         />
       );
     }
@@ -109,6 +123,7 @@ function EditableText({
         setEditing(true);
       }}
       className="cursor-text hover:bg-primary/5 hover:outline hover:outline-1 hover:outline-primary/25 hover:rounded px-0.5 -mx-0.5 transition-colors"
+      title="Click to edit"
     >
       {value}
     </span>
@@ -255,6 +270,46 @@ export function ResumePreview({
     updateField("education", education);
   }
 
+  function deleteSkill(i: number) {
+    updateField("skills", localResume.skills.filter((_, idx) => idx !== i));
+  }
+
+  function deleteExpHighlight(expIdx: number, hlIdx: number) {
+    const experience = localResume.experience.map((e, i) => {
+      if (i !== expIdx) return e;
+      return { ...e, highlights: e.highlights.filter((_, j) => j !== hlIdx) };
+    });
+    updateField("experience", experience);
+  }
+
+  function deleteExp(idx: number) {
+    updateField("experience", localResume.experience.filter((_, i) => i !== idx));
+  }
+
+  function deleteProjHighlight(projIdx: number, hlIdx: number) {
+    const projects = localResume.projects.map((p, i) => {
+      if (i !== projIdx) return p;
+      return { ...p, highlights: (p.highlights ?? []).filter((_, j) => j !== hlIdx) };
+    });
+    updateField("projects", projects);
+  }
+
+  function deleteProjTech(projIdx: number, techIdx: number) {
+    const projects = localResume.projects.map((p, i) => {
+      if (i !== projIdx) return p;
+      return { ...p, tech: p.tech.filter((_, j) => j !== techIdx) };
+    });
+    updateField("projects", projects);
+  }
+
+  function deleteProj(idx: number) {
+    updateField("projects", localResume.projects.filter((_, i) => i !== idx));
+  }
+
+  function deleteEdu(idx: number) {
+    updateField("education", localResume.education.filter((_, i) => i !== idx));
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -333,9 +388,9 @@ export function ResumePreview({
               <RefreshCw className="w-4 h-4" />
               Regenerate
             </Button>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground">
-              <Pencil className="w-3.5 h-3.5 shrink-0" />
-              Click any text on the resume to edit it
+            <div className="flex items-start gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground">
+              <Pencil className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>Click any text to edit. Hover blocks to delete.</span>
             </div>
           </div>
         </motion.div>
@@ -436,15 +491,17 @@ export function ResumePreview({
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.4 + i * 0.03 }}
+                    className="group"
                   >
                     <Badge
                       variant="secondary"
-                      className="text-xs font-normal rounded-md px-2.5 py-0.5"
+                      className="text-xs font-normal rounded-md px-2.5 py-0.5 flex items-center gap-1"
                     >
                       <EditableText
                         value={skill}
                         onChange={(v) => updateSkill(i, v)}
                       />
+                      <DeleteButton onClick={() => deleteSkill(i)} title="Remove skill" />
                     </Badge>
                   </motion.div>
                 ))}
@@ -464,8 +521,15 @@ export function ResumePreview({
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.5 + i * 0.1 }}
-                      className="space-y-1"
+                      className="space-y-1 group relative pr-5"
                     >
+                      <button
+                        onClick={() => deleteExp(i)}
+                        title="Delete experience"
+                        className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 flex items-center justify-center rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
                       <div className="flex items-baseline justify-between gap-2">
                         <h4 className="text-sm font-semibold">
                           <EditableText
@@ -490,13 +554,14 @@ export function ResumePreview({
                         {exp.highlights.map((h, j) => (
                           <li
                             key={j}
-                            className="text-xs text-foreground/75 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-muted-foreground"
+                            className="group/hl text-xs text-foreground/75 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-muted-foreground flex items-start gap-1"
                           >
                             <EditableText
                               value={h}
                               onChange={(v) => updateExpHighlight(i, j, v)}
                               multiline
                             />
+                            <DeleteButton onClick={() => deleteExpHighlight(i, j)} title="Remove bullet" />
                           </li>
                         ))}
                       </ul>
@@ -519,8 +584,15 @@ export function ResumePreview({
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.6 + i * 0.08 }}
-                      className="space-y-1"
+                      className="space-y-1 group relative pr-5"
                     >
+                      <button
+                        onClick={() => deleteProj(i)}
+                        title="Delete project"
+                        className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 flex items-center justify-center rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
                       <h4 className="text-sm font-semibold">
                         <EditableText
                           value={proj.name}
@@ -539,13 +611,14 @@ export function ResumePreview({
                           {proj.highlights.map((h, j) => (
                             <li
                               key={j}
-                              className="text-xs text-foreground/75 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-muted-foreground"
+                              className="group/hl text-xs text-foreground/75 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-muted-foreground flex items-start gap-1"
                             >
                               <EditableText
                                 value={h}
                                 onChange={(v) => updateProjHighlight(i, j, v)}
                                 multiline
                               />
+                              <DeleteButton onClick={() => deleteProjHighlight(i, j)} title="Remove bullet" />
                             </li>
                           ))}
                         </ul>
@@ -554,12 +627,13 @@ export function ResumePreview({
                         {proj.tech.map((t, j) => (
                           <span
                             key={j}
-                            className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded"
+                            className="group/tech text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded flex items-center gap-0.5"
                           >
                             <EditableText
                               value={t}
                               onChange={(v) => updateProjTech(i, j, v)}
                             />
+                            <DeleteButton onClick={() => deleteProjTech(i, j)} title="Remove tech" />
                           </span>
                         ))}
                       </div>
@@ -577,7 +651,14 @@ export function ResumePreview({
                 </h3>
                 <div className="space-y-2">
                   {localResume.education.map((edu, i) => (
-                    <div key={i} className="flex items-baseline justify-between gap-2">
+                    <div key={i} className="group relative flex items-baseline justify-between gap-2 pr-5">
+                      <button
+                        onClick={() => deleteEdu(i)}
+                        title="Delete education"
+                        className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 flex items-center justify-center rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
                       <div>
                         <span className="text-sm font-medium">
                           <EditableText
