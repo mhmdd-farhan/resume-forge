@@ -48,7 +48,7 @@ export default function LandingPage() {
   const handleSubscribe = async (planType: "starter" | "premium" | "annual") => {
     trackClick(`subscribe_${planType}`);
     if (!session) {
-      signIn("google");
+      signIn("google", { callbackUrl: "/dashboard" });
       return;
     }
 
@@ -148,7 +148,7 @@ export default function LandingPage() {
             ) : (
               <>
                 <button
-                  onClick={() => signIn("google")}
+                  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
                   Sign In
@@ -201,7 +201,7 @@ export default function LandingPage() {
                 {status !== "loading" && !session && (
                   <>
                     <button
-                      onClick={() => { signIn("google"); setMobileMenuOpen(false); }}
+                      onClick={() => { signIn("google", { callbackUrl: "/dashboard" }); setMobileMenuOpen(false); }}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-all text-left"
                     >
                       Sign In
