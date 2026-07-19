@@ -91,7 +91,70 @@ export default function LandingPage() {
     "SMKN 7 Semarang",
   ];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": `${process.env.NEXT_PUBLIC_APP_URL || "https://resumeforge.com"}/#webapp`,
+        name: "ResumeForge",
+        url: process.env.NEXT_PUBLIC_APP_URL || "https://resumeforge.com",
+        description:
+          "Generate an ATS-friendly resume or CV using AI for free. Paste any job description and get a tailored, recruiter-ready resume in minutes.",
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+          description: "Free plan — 3 resumes included",
+        },
+        featureList: [
+          "Generate ATS-friendly resume using AI",
+          "Generate CV using AI for free",
+          "Tailored resume from job description",
+          "PDF export",
+          "ATS score optimization",
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "Can I generate a CV using AI for free?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Yes. ResumeForge lets you generate up to 3 ATS-friendly resumes or CVs for free using AI. No credit card required.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "How do I generate an ATS-friendly resume using AI?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Simply paste the job description and your profile details into ResumeForge. Our AI will generate a tailored, ATS-optimized resume in seconds.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Is ResumeForge really free?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Yes, the free plan includes 3 resume generations with PDF export. Paid plans start at $1/month for more generations.",
+            },
+          },
+        ],
+      },
+    ],
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="min-h-screen flex flex-col selection:bg-primary/20 selection:text-primary">
       {/* 1. Navigation */}
       <motion.header
@@ -761,5 +824,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
