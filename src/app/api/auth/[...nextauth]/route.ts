@@ -4,12 +4,28 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import type { NextAuthOptions } from "next-auth";
 
+// Resolve Google OAuth credentials explicitly so a missing/empty value is
+// caught with a clear log instead of reaching the OAuth client as "" (which
+// surfaces as the cryptic "client_id is required" at sign-in time).
+const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.OAUTH_CLIENT_ID;
+const googleClientSecret =
+  process.env.GOOGLE_CLIENT_SECRET || process.env.OAUTH_CLIENT_SECRET;
+
+if (!googleClientId || !googleClientSecret) {
+  console.error(
+    `[next-auth] Google OAuth is NOT configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET ` +
+      `(scope: Production) in Vercel -> Project -> Settings -> Environment Variables, then redeploy. ` +
+      `Current: GOOGLE_CLIENT_ID=${googleClientId ? "set" : "MISSING/EMPTY"}, ` +
+      `GOOGLE_CLIENT_SECRET=${googleClientSecret ? "set" : "MISSING/EMPTY"}`
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || process.env.OAUTH_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || process.env.OUTH_CLIENT_SECRET || "",
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
     }),
   ],
   session: {
