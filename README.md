@@ -65,10 +65,13 @@ MIDTRANS_PREMIUM_PRICE=49000
 MIDTRANS_ANNUAL_PRICE=399000
 NEXT_PUBLIC_APP_URL=https://your-app-domain.com
 ```
+> `NEXT_APP_URL` is the preferred name (server-side); `NEXT_PUBLIC_APP_URL` is read as a fallback and is also used by the client bundle. `vercel.json` `build.env` injects both at build time.
 
 > `NEXT_PUBLIC_*` vars must also be added to the **Preview** environment (or set the domain-based override) so the Midtrans `notification_url` and checkout redirects are correct on previews.
 >
-> ⚠️ **`NEXTAUTH_URL` must be a non-empty absolute URL** (e.g. `https://your-app-domain.com`). If it is set to an empty string, `next-auth/react` crashes the build at prerender with `TypeError [ERR_INVALID_URL]: Invalid URL (input: '')`. As a safety net, `vercel.json` (`build.env`) injects `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` at build time — but set them in the dashboard too so the **runtime** (next-auth server, Midtrans `notification_url`) uses the right values.
+> ⚠️ **`NEXTAUTH_URL` must be a non-empty absolute URL** (e.g. `https://your-app-domain.com`). If it is set to an empty string, `next-auth/react` crashes the build at prerender with `TypeError [ERR_INVALID_URL]: Invalid URL (input: '')`. As a safety net, `vercel.json` (`build.env`) injects `NEXTAUTH_URL`, `NEXT_APP_URL` and `NEXT_PUBLIC_APP_URL` at build time — but set them in the dashboard too so the **runtime** (next-auth server, Midtrans `notification_url`) uses the right values.
+>
+> Public URL: `NEXT_APP_URL` is read first (server-side), then `NEXT_PUBLIC_APP_URL` (also needed so the landing-page JSON-LD/SEO URLs are inlined into the client bundle). Source of truth: `src/lib/config.ts`.
 
 **Database on Vercel:** set `DATABASE_URL` to a hosted Postgres (e.g. Neon, Supabase, Vercel Postgres). Apply the schema once after setup:
 
@@ -91,7 +94,9 @@ MIDTRANS_CLIENT_KEY=SB-Mid-client-xxxx
 MIDTRANS_STARTER_PRICE=15000    # optional overrides (IDR)
 MIDTRANS_PREMIUM_PRICE=49000
 MIDTRANS_ANNUAL_PRICE=399000
-NEXT_PUBLIC_APP_URL=https://... # required for the payment notification URL
+# Public URL (required for the payment notification URL)
+NEXT_APP_URL=https://your-app-domain.com
+NEXT_PUBLIC_APP_URL=https://your-app-domain.com
 ```
 
 ### Setup steps

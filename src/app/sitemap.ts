@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
+import { APP_URL } from "@/lib/config";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://resumeforge.com";
   return [
     {
-      url: baseUrl,
+      url: APP_URL,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,

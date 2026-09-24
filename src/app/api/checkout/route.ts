@@ -38,10 +38,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const appUrl = process.env.NEXT_APP_URL || process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
       return NextResponse.json(
-        { error: "NEXT_PUBLIC_APP_URL is not configured." },
+        { error: "NEXT_APP_URL (or NEXT_PUBLIC_APP_URL) is not configured." },
         { status: 500 },
       );
     }

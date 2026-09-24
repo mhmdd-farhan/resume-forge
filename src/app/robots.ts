@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
+import { APP_URL } from "@/lib/config";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://resumeforge.com";
   return {
     rules: [
       {
@@ -10,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/admin/", "/dashboard/"],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${APP_URL}/sitemap.xml`,
   };
 }

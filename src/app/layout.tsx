@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { APP_URL } from "@/lib/config";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/AuthProvider";
 import { PageTracker } from "@/components/PageTracker";
@@ -10,8 +11,6 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 });
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://resumeforge.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
