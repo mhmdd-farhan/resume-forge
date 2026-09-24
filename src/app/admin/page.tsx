@@ -43,7 +43,7 @@ async function getStats() {
     prisma.user.findMany({
       orderBy: { id: "desc" },
       take: 10,
-      select: { id: true, name: true, email: true, plan: true, resumesGenerated: true, polarSubscriptionId: true },
+      select: { id: true, name: true, email: true, plan: true, planExpiresAt: true, resumesGenerated: true, midtransOrderId: true },
     }),
     prisma.pageView.count(),
     prisma.clickEvent.count(),
@@ -390,7 +390,17 @@ export default async function AdminPage() {
                       </td>
                       <td className="py-2.5 pr-4 text-right tabular-nums font-semibold text-foreground">{u.resumesGenerated}</td>
                       <td className="py-2.5 text-right">
-                        {u.polarSubscriptionId ? <span className="text-emerald-600 font-medium">Active</span> : <span className="text-muted-foreground/50">—</span>}
+                        {(() => {
+                          const hasActive =
+                            u.plan !== "free" &&
+                            u.planExpiresAt !== null &&
+                            new Date(u.planExpiresAt).getTime() > Date.now();
+                          return hasActive ? (
+                            <span className="text-emerald-600 font-medium">Active</span>
+                          ) : (
+                            <span className="text-muted-foreground/50">—</span>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );

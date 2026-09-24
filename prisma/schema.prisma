@@ -41,11 +41,12 @@ model User {
   emailVerified       DateTime?
   image               String?
   plan                  String    @default("free")
+  planExpiresAt         DateTime?
   resumesGenerated      Int       @default(0)
   dailyResumesGenerated Int       @default(0)
   lastGenerationDate    String?
-  polarCustomerId       String?
-  polarSubscriptionId   String?
+  midtransOrderId       String?
+  midtransPaymentType   String?
   accounts            Account[]
   sessions            Session[]
 }

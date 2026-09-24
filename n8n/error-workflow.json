@@ -1,0 +1,97 @@
+{
+    "name": "Resume Generator - Error Handler",
+    "nodes": [
+        {
+            "parameters": {
+                "content": "Optional error handler. Starts on any failed execution of the 'Resume Generator' workflow. Replace the URL in the 'Notify' node with your channel (postmark.in / Slack webhook / Telegram bot / etc).",
+                "height": 160,
+                "width": 340
+            },
+            "id": "25d15209-8f6f-4d59-8e59-24bf1461c667",
+            "name": "Error Notes",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                -340,
+                20
+            ]
+        },
+        {
+            "parameters": {},
+            "id": "91cb6b0f-d422-4970-8a6e-ced53dbcc6d2",
+            "name": "Error Trigger",
+            "type": "n8n-nodes-base.errorTrigger",
+            "typeVersion": 1,
+            "position": [
+                -240,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const t = $json ?? {};\nreturn [{\n  json: {\n    text:\n      \"ResumeForge n8n workflow failed!\\n\\n\" +\n      \"Workflow: \" + (t.workflow?.name ?? \"unknown\") + \"\\n\" +\n      \"Node: \" + (t.trigger?.node ?? \"unknown\") + \" (\" + (t.trigger?.type ?? \"\") + \")\\n\" +\n      \"Error: \" + (t.error?.message ?? t.error ?? \"unknown\") + \"\\n\" +\n      \"Last Node Output: \" + JSON.stringify(t.lastNodeExecutedData ?? t.execution ?? {}).slice(0, 1500),\n  },\n}];"
+            },
+            "id": "93e04ba4-49a4-463f-a275-dfce53269c8d",
+            "name": "Format Error",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                20,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://your-notification-hook.example.com/n8n-error",
+                "method": "POST",
+                "authentication": "none",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ $json }}",
+                "options": {}
+            },
+            "id": "477e5e61-1316-40e5-a944-ea50b1b92745",
+            "name": "Notify",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                340,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Error Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Format Error",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Error": {
+            "main": [
+                [
+                    {
+                        "node": "Notify",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "timezone": "Asia/Jakarta"
+    },
+    "active": false,
+    "versionId": "a2b2d2f0-2a51-461f-8a46-ca6591955310",
+    "meta": {
+        "templateCredsSetupCompleted": false
+    },
+    "tags": []
+}

@@ -1,0 +1,4 @@
+# Not needed in the Vercel build / function bundle
+n8n
+error_log
+.dockerignore

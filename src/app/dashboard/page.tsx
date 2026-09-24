@@ -43,6 +43,7 @@ interface DashboardData {
   email: string;
   image: string;
   plan: string;
+  planExpiresAt: string | null;
   resumesGenerated: number;
   dailyUsed: number;
   remaining: number | null;
@@ -375,7 +376,11 @@ function DashboardTab({
               {data.hasSubscription ? "Active" : "–"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {data.hasSubscription ? "Subscription is active" : "No active subscription"}
+              {data.hasSubscription
+                ? data.planExpiresAt
+                  ? `Active until ${new Date(data.planExpiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`
+                  : "Subscription is active"
+                : "No active subscription"}
             </p>
           </CardContent>
         </Card>

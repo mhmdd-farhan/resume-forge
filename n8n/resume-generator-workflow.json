@@ -1,0 +1,240 @@
+{
+    "name": "Resume Generator",
+    "nodes": [
+        {
+            "parameters": {
+                "content": "## Setup\n\n### 1. Groq credential\nCreate a **Groq** credential (type `groqApi`) with your API key.\n\n### 2. Webhook Basic Auth\nCreate an **HTTP Basic Auth** credential matching `N8N_BASIC_AUTH` in the Next.js app (`username:password`).\n\n### 3. Test\nWebhook -> 'Listen for test event', then trigger the app. Payload arrives as `{ jobDescription, candidateContext }`.\n\n### 4. Structure\n`Webhook -> AI Agent` (main). `Groq Chat Model` is attached to the agent via its `ai_languageModel` input (Model). Agent output (`.output`) -> Normalize & Score -> IF -> Respond.\n\n### 5. Node types (n8n docs)\n- AI Agent: `@n8n/n8n-nodes-langchain.agent`\n- Groq Chat Model: `@n8n/n8n-nodes-langchain.lmChatGroq`\nIf either shows 'Unknown node', your n8n uses the legacy prefix: rename to `n8n-nodes-langchain.agent` / `n8n-nodes-langchain.lmChatGroq`.\n\n### 6. Error handling\n- Bad AI output -> inline `Respond Error` (HTTP 500).\n- Hard failures -> attach the Error Workflow: Workflow settings -> On error.",
+                "height": 340,
+                "width": 380
+            },
+            "id": "96f372c4-95d4-4b12-969e-a075f102d650",
+            "name": "Setup Notes",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                -760,
+                20
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "resume-generator",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "fe23cc2c-204e-43f3-aa61-3bdef300c509",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                -640,
+                480
+            ],
+            "webhookId": "f7f9a159-1a18-4338-9df8-fda0354dd265",
+            "credentials": {
+                "httpBasicAuth": {
+                    "id": "944cc3cc-06bd-4410-8805-8ef2f6c1da40",
+                    "name": "ResumeForge Webhook Basic Auth"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "agent": "toolsAgent",
+                "promptType": "define",
+                "text": "=Build the resume for the JOB DESCRIPTION below using the candidate's CANDIDATE CONTEXT. Return ONLY the JSON defined by the schema in your system message.\n\nJOB DESCRIPTION:\n{{ $json.jobDescription }}\n\nCANDIDATE CONTEXT:\n{{ $json.candidateContext }}",
+                "hasOutputParser": false,
+                "options": {
+                    "systemMessage": "You are ResumeForge, an expert ATS-optimized resume writer.\n\nYou receive the target job description and the candidate's structured profile data (work experience, education, GitHub profile & repos, portfolio). Build an optimized resume for the target role.\n\nOUTPUT RULES:\n1. Reply with ONLY one valid JSON object. No markdown, no code fences, no commentary.\n2. The JSON must match EXACTLY this schema:\n{\n  \"resume\": {\n    \"name\": \"string\",\n    \"title\": \"string\",\n    \"summary\": \"string\",\n    \"skills\": [\"string\"],\n    \"experience\": [\n      { \"company\": \"string\", \"role\": \"string\", \"duration\": \"string\", \"highlights\": [\"string\"] }\n    ],\n    \"projects\": [\n      { \"name\": \"string\", \"description\": \"string\", \"highlights\": [\"string\"], \"tech\": [\"string\"] }\n    ],\n    \"education\": [\n      { \"institution\": \"string\", \"degree\": \"string\", \"year\": \"string\" }\n    ]\n  }\n}\n3. Treat sections marked \"PRIMARY SOURCE\" in the candidate data as ground truth. Never invent or change companies, roles, dates, or listed achievements.\n4. Weave relevant job-description keywords into the summary, skills, and highlights naturally. No keyword stuffing.\n5. Quantify achievements whenever possible (percentages, dollars, time saved, users, scale).\n6. Keep 3-6 highlights per role, 3-5 projects, 6-10 skills.\n7. If a value is unknown, use \"\" for strings and [] for arrays. Never invent identity details; default the name to \"Your Name\".\n8. Escapes double quotes inside strings properly. Return valid JSON only."
+                }
+            },
+            "id": "6ec45f10-e4a2-4718-92e7-e2b8340e491a",
+            "name": "AI Agent",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 1.7,
+            "position": [
+                -320,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "model": "llama-3.3-70b-versatile",
+                "options": {
+                    "maxTokensToSample": 8000,
+                    "temperature": 0.3
+                }
+            },
+            "id": "4d463879-151e-43fd-bb5f-f91c1b3aad55",
+            "name": "Groq Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                -320,
+                220
+            ],
+            "credentials": {
+                "groqApi": {
+                    "id": "1d9234ec-1072-48be-8f6d-f550a3b602b9",
+                    "name": "Groq account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// ---- 1. Extract raw LLM text (AI Agent returns { output: string }) ----\nconst raw =\n  $json.output ??\n  $json.message?.content ??\n  $json.choices?.[0]?.message?.content ??\n  $json.result ??\n  $json.raw ??\n  \"\";\n\nfunction cleanJson(text) {\n  if (!text || typeof text !== \"string\") return null;\n  let t = text.trim();\n  const fence = t.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (fence) t = fence[1].trim();\n  const start = t.indexOf(\"{\");\n  const end = t.lastIndexOf(\"}\");\n  if (start === -1 || end === -1 || end <= start) return null;\n  try { return JSON.parse(t.slice(start, end + 1)); } catch (e) { return null; }\n}\n\nconst parsed = cleanJson(raw);\nconst ai = parsed && parsed.resume ? parsed : parsed ? { resume: parsed } : null;\n\nfunction asString(v, fallback = \"\") { return v == null ? fallback : String(v); }\nfunction asArray(v) {\n  if (Array.isArray(v)) return v.filter((x) => x != null);\n  if (typeof v === \"string\" && v.trim()) return v.split(\",\").map((s) => s.trim()).filter(Boolean);\n  return [];\n}\nfunction asStrings(v) { return asArray(v).map((x) => asString(x)); }\n\n// ---- 2. Early error if the AI produced nothing usable ----\nif (!ai) {\n  return [{ json: { success: false, error: \"AI returned an empty or invalid response. Please try again.\" } }];\n}\n\n// ---- 3. Normalize resume to exactly match ResumeSchema ----\nconst resume = {\n  name: asString(ai.resume?.name, \"Your Name\"),\n  title: asString(ai.resume?.title, \"Professional\"),\n  summary: asString(ai.resume?.summary, \"\"),\n  skills: asStrings(ai.resume?.skills).slice(0, 20),\n  experience: asArray(ai.resume?.experience).map((e) => ({\n    company: asString(e.company, \"Unknown Company\"),\n    role: asString(e.role, \"Role\"),\n    duration: asString(e.duration, \"\"),\n    highlights: asStrings(e.highlights),\n  })),\n  projects: asArray(ai.resume?.projects).map((p) => ({\n    name: asString(p.name, \"Project\"),\n    description: asString(p.description, \"\"),\n    highlights: asStrings(p.highlights),\n    tech: asStrings(p.tech),\n  })),\n  education: asArray(ai.resume?.education).map((e) => ({\n    institution: asString(e.institution, \"Institution\"),\n    degree: asString(e.degree, \"Degree\"),\n    year: asString(e.year, \"\"),\n  })),\n};\n\n// ---- 4. Deterministic score (0-100) against the job description ----\nconst jobDescription = asString($(\"Webhook\").first().json?.jobDescription);\nconst resumeLower = JSON.stringify(resume).toLowerCase();\n\nconst stopWords = new Set([\n  \"the\",\"a\",\"an\",\"and\",\"or\",\"but\",\"for\",\"with\",\"in\",\"on\",\"at\",\"to\",\"of\",\"is\",\"are\",\"as\",\"by\",\"be\",\"been\",\"being\",\"have\",\"has\",\"had\",\"we\",\"our\",\"you\",\"your\",\"they\",\"their\",\"this\",\"that\",\"these\",\"those\",\"will\",\"would\",\"can\",\"could\",\"should\",\"must\",\"may\",\"might\",\"do\",\"does\",\"did\",\"from\",\"into\",\"over\",\"under\",\"between\",\"within\",\"across\",\"about\",\"than\",\"then\",\"also\",\"very\",\"just\",\"not\",\"no\",\"yes\",\"all\",\"any\",\"both\",\"each\",\"few\",\"many\",\"much\",\"more\",\"most\",\"some\",\"such\",\"work\",\"job\",\"role\",\"position\",\"company\",\"candidate\",\"resume\",\"experience\",\"year\",\"years\",\"using\",\"use\",\"used\",\"include\",\"including\",\"strong\",\"solid\",\"proven\",\"ability\",\"abilities\",\"skills\",\"skill\",\"etc\",\"e.g\",\"team\",\"environment\",\"looking\",\"seek\",\"seeking\",\"opportunity\",\"responsibilities\",\"requirements\",\"qualifications\",\"preferred\",\"nice\",\"plus\",\"what\",\"who\",\"whom\",\"which\",\"when\",\"where\",\"why\",\"how\",\"it\",\"its\",\"he\",\"she\",\"him\",\"her\",\"them\"\n]);\n\nconst words = jobDescription\n  .toLowerCase()\n  .replace(/[^a-z0-9+#.\\-]/g, \" \")\n  .split(/\\s+/)\n  .filter((w) => w.length > 2 && !/^\\d+$/.test(w) && !stopWords.has(w));\nconst keywords = [...new Set(words)];\n\nconst keywordMatch = keywords.length\n  ? Math.round((keywords.filter((k) => resumeLower.includes(k)).length / keywords.length) * 100)\n  : 50;\n\nconst skillSet = new Set(resume.skills.map((s) => s.toLowerCase()));\nconst skillMatches = keywords.filter((k) =>\n  [...skillSet].some((s) => s === k || s.includes(k) || k.includes(s))\n);\nconst skillsMatch = keywords.length\n  ? Math.round((skillMatches.length / keywords.length) * 100)\n  : 50;\n\nconst actionVerbs = [\n  \"built\",\"developed\",\"created\",\"designed\",\"implemented\",\"managed\",\"led\",\"improved\",\n  \"increased\",\"reduced\",\"optimized\",\"launched\",\"shipped\",\"collaborated\",\"engineered\",\n  \"architected\",\"maintained\",\"delivered\",\"deployed\",\"automated\",\"spearheaded\",\n  \"established\",\"streamlined\",\"mentored\",\"trained\",\"analyzed\",\"researched\",\"integrated\",\n  \"migrated\",\"scaled\",\"boosted\",\"grew\",\"drove\",\"initiated\",\"rebuilt\",\"refactored\",\n];\nconst highlightText = resume.experience.flatMap((e) => e.highlights).join(\" \").toLowerCase();\nconst verbCount = actionVerbs.filter((v) => highlightText.includes(v)).length;\nconst experienceMatch = Math.min(\n  95,\n  resume.experience.length >= 2 ? 50 + verbCount * 5 : 35 + verbCount * 3\n);\n\nconst clamp = (n) => Math.min(100, Math.max(0, Math.round(n)));\nconst score = {\n  overall: clamp(skillsMatch * 0.35 + keywordMatch * 0.3 + experienceMatch * 0.35),\n  skillsMatch: clamp(skillsMatch),\n  experienceMatch: clamp(experienceMatch),\n  keywordMatch: clamp(keywordMatch),\n};\n\nreturn [{ json: { success: true, resume, score } }];"
+            },
+            "id": "52f2595a-6dd8-4f1e-aa63-fbdcd1fd9de5",
+            "name": "Normalize & Score",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                0,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "loose",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "id": "abc082d1-acd6-427d-a857-c8c8fd044f47",
+                            "leftValue": "={{ $json.success }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals",
+                                "singleValue": true
+                            },
+                            "typeValidation": "loose"
+                        }
+                    ],
+                    "combinator": "and"
+                }
+            },
+            "id": "a51db9be-c4ee-425d-a397-b3d43b92606a",
+            "name": "Success?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                320,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { resume: $json.resume, score: $json.score } }}",
+                "options": {
+                    "responseCode": 200
+                }
+            },
+            "id": "b65e9a5e-74ac-4f0e-bca2-68b9b0f1ef5e",
+            "name": "Respond Success",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                640,
+                280
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}",
+                "options": {
+                    "responseCode": 500
+                }
+            },
+            "id": "3046a3d9-6222-4e59-89db-eb6c9c93b939",
+            "name": "Respond Error",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                640,
+                680
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Normalize & Score",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Normalize & Score": {
+            "main": [
+                [
+                    {
+                        "node": "Success?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Success?": {
+            "main": [
+                [
+                    {
+                        "node": "Respond Success",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Respond Error",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "timezone": "Asia/Jakarta"
+    },
+    "active": false,
+    "versionId": "9ea5a0ec-c2fd-4c47-bdd3-4d0fcd2a115d",
+    "meta": {
+        "templateCredsSetupCompleted": false
+    },
+    "tags": []
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "regions": ["sin1"],
+  "functions": {
+    "src/app/api/webhook/midtrans/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}

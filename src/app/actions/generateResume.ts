@@ -10,6 +10,7 @@ import { generateResumeWithAI } from "@/lib/ai";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { getActivePlan } from "@/lib/plans";
 
 const STARTER_DAILY_LIMIT = 4;
 const FREE_TOTAL_LIMIT = 3;
@@ -36,10 +37,10 @@ export async function generateResume(
       where: { id: userId },
       select: {
         plan: true,
+        planExpiresAt: true,
         resumesGenerated: true,
         dailyResumesGenerated: true,
         lastGenerationDate: true,
-        polarSubscriptionId: true,
       },
     });
 
@@ -47,10 +48,11 @@ export async function generateResume(
       return { success: false, error: "User session not found in database." };
     }
 
-    const hasValidSubscription = !!dbUser.polarSubscriptionId;
-    const isStarter = dbUser.plan === "starter" && hasValidSubscription;
-    const isPaid = (dbUser.plan === "premium" || dbUser.plan === "annual") && hasValidSubscription;
-    const effectivePlan: string = isPaid ? dbUser.plan : isStarter ? "starter" : "free";
+    const { plan: effectivePlan } = getActivePlan({
+      plan: dbUser.plan,
+      planExpiresAt: dbUser.planExpiresAt,
+    });
+    const isStarter = effectivePlan === "starter";
 
     if (effectivePlan === "free" && dbUser.resumesGenerated >= FREE_TOTAL_LIMIT) {
       return {

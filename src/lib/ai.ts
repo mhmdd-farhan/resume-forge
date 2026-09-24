@@ -1,7 +1,8 @@
 import type { GitHubProfile, GitHubRepoDetail, LinkedInProfile } from "./parser";
 import type { Resume, ResumeScore } from "./types";
 
-const N8N_WEBHOOK_URL = "https://n8n.gloapp.my.id/webhook/resume-generator";
+const N8N_WEBHOOK_URL =
+  process.env.N8N_WEBHOOK_URL ?? "https://n8n.gloapp.my.id/webhook/resume-generator";
 const N8N_BASIC_AUTH = Buffer.from(process.env.N8N_BASIC_AUTH ?? "").toString("base64");
 
 function formatCandidateContext(params: {

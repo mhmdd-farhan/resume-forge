@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { getActivePlan } from "@/lib/plans";
 
 const FREE_LIMIT = 3;
 const STARTER_DAILY_LIMIT = 4;
@@ -24,11 +25,11 @@ export async function GET() {
         email: true,
         image: true,
         plan: true,
+        planExpiresAt: true,
         resumesGenerated: true,
         dailyResumesGenerated: true,
         lastGenerationDate: true,
-        polarCustomerId: true,
-        polarSubscriptionId: true,
+        midtransOrderId: true,
       },
     });
 
@@ -36,9 +37,12 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const hasSubscription = !!user.polarSubscriptionId;
-    const isPremium = (user.plan === "premium" || user.plan === "annual") && hasSubscription;
-    const isStarter = user.plan === "starter" && hasSubscription;
+    const { plan: effectivePlan, active: hasSubscription } = getActivePlan({
+      plan: user.plan,
+      planExpiresAt: user.planExpiresAt,
+    });
+    const isPremium = (effectivePlan === "premium" || effectivePlan === "annual") && hasSubscription;
+    const isStarter = effectivePlan === "starter" && hasSubscription;
 
     // For starter plan, reset daily count if it's a new day
     const today = todayUtc();
@@ -63,7 +67,8 @@ export async function GET() {
       name: user.name,
       email: user.email,
       image: user.image,
-      plan: user.plan,
+      plan: effectivePlan,
+      planExpiresAt: hasSubscription ? user.planExpiresAt?.toISOString() ?? null : null,
       resumesGenerated: user.resumesGenerated,
       dailyUsed,
       remaining,

@@ -106,7 +106,7 @@ export default function LandingPage() {
         offers: {
           "@type": "Offer",
           price: "0",
-          priceCurrency: "USD",
+          priceCurrency: "IDR",
           description: "Free plan — 3 resumes included",
         },
         featureList: [
@@ -141,7 +141,7 @@ export default function LandingPage() {
             name: "Is ResumeForge really free?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Yes, the free plan includes 3 resume generations with PDF export. Paid plans start at $1/month for more generations.",
+              text: "Yes, the free plan includes 3 resume generations with PDF export. Paid starter access starts at Rp15.000 for 30 days.",
             },
           },
         ],
@@ -634,8 +634,8 @@ export default function LandingPage() {
                 <CardHeader className="space-y-1.5 p-6 pb-4">
                   <div className="text-xs font-bold tracking-widest text-teal-600 uppercase">STARTER</div>
                   <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-4xl font-extrabold text-foreground">$1</span>
-                    <span className="text-xs text-muted-foreground font-medium">/month</span>
+                    <span className="text-4xl font-extrabold text-foreground">Rp15rb</span>
+                    <span className="text-xs text-muted-foreground font-medium">/30 hari</span>
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 pt-0 flex-1 flex flex-col justify-between">
@@ -677,8 +677,8 @@ export default function LandingPage() {
                 <CardHeader className="space-y-1.5 p-6 pb-4">
                   <div className="text-xs font-bold tracking-widest text-primary uppercase">PREMIUM</div>
                   <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-4xl font-extrabold text-foreground">$5</span>
-                    <span className="text-xs text-muted-foreground font-medium">/month</span>
+                    <span className="text-4xl font-extrabold text-foreground">Rp49rb</span>
+                    <span className="text-xs text-muted-foreground font-medium">/30 hari</span>
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 pt-0 flex-1 flex flex-col justify-between">
@@ -716,14 +716,14 @@ export default function LandingPage() {
               <Card className="border border-border/40 bg-card/60 backdrop-blur-sm rounded-2xl h-full flex flex-col justify-between overflow-hidden relative w-full">
                 {/* Discount Badge */}
                 <div className="absolute top-0 right-0 bg-secondary text-secondary-foreground border-l border-b border-border/40 text-[9px] font-bold tracking-wider uppercase px-3 py-1 rounded-bl-xl">
-                  SAVE 60%
+                  SAVE 32%
                 </div>
 
                 <CardHeader className="space-y-1.5 p-6 pb-3">
                   <div className="text-xs font-bold tracking-widest text-muted-foreground uppercase">ANNUAL</div>
                   <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-4xl font-extrabold text-foreground">$25</span>
-                    <span className="text-xs text-muted-foreground font-medium">/year</span>
+                    <span className="text-4xl font-extrabold text-foreground">Rp399rb</span>
+                    <span className="text-xs text-muted-foreground font-medium">/365 hari</span>
                   </div>
                   <div className="flex flex-col text-[10px] text-primary/80 font-semibold pt-1">
                     <span>Limited-time offer</span>
@@ -746,7 +746,7 @@ export default function LandingPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-primary shrink-0" />
-                      <span>Save 60%</span>
+                      <span>Save 32%</span>
                     </li>
                   </ul>
                   <Button
