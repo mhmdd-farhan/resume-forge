@@ -10,9 +10,9 @@
   },
   "build": {
     "env": {
-      "NEXTAUTH_URL": "https://forge-resume.gloapp.my.id",
-      "NEXT_APP_URL": "https://forge-resume.gloapp.my.id",
-      "NEXT_PUBLIC_APP_URL": "https://forge-resume.gloapp.my.id"
+      "NEXTAUTH_URL": "https://resume-forge.gloapp.my.id",
+      "NEXT_APP_URL": "https://resume-forge.gloapp.my.id",
+      "NEXT_PUBLIC_APP_URL": "https://resume-forge.gloapp.my.id"
     }
   }
 }
