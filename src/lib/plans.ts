@@ -1,6 +1,8 @@
 export type PaidPlanType = "starter" | "premium" | "annual";
 export type PlanType = "free" | PaidPlanType;
 
+import { DEFAULT_PRICES } from "@/lib/pricing";
+
 export interface PlanConfig {
   /** Price in IDR (configurable via env) */
   price: number;
@@ -9,19 +11,33 @@ export interface PlanConfig {
   displayName: string;
 }
 
+/**
+ * Server-side price reader. Non-public MIDTRANS_*_PRICE takes precedence
+ * (existing config stays authoritative for charging); falls back to the
+ * NEXT_PUBLIC_MIDTRANS_*_PRICE (same values the landing page displays),
+ * then to the built-in default.
+ */
+function envPrice(plan: PaidPlanType, fallback: number): number {
+  const key = `MIDTRANS_${plan.toUpperCase()}_PRICE`;
+  const publicKey = `NEXT_PUBLIC_${key}`;
+  const raw = process.env[key] ?? process.env[publicKey];
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export const PLANS: Record<PaidPlanType, PlanConfig> = {
   starter: {
-    price: Number(process.env.MIDTRANS_STARTER_PRICE ?? 15000),
+    price: envPrice("starter", DEFAULT_PRICES.starter),
     validityDays: 30,
     displayName: "Starter",
   },
   premium: {
-    price: Number(process.env.MIDTRANS_PREMIUM_PRICE ?? 49000),
+    price: envPrice("premium", DEFAULT_PRICES.premium),
     validityDays: 30,
     displayName: "Premium",
   },
   annual: {
-    price: Number(process.env.MIDTRANS_ANNUAL_PRICE ?? 399000),
+    price: envPrice("annual", DEFAULT_PRICES.annual),
     validityDays: 365,
     displayName: "Annual",
   },

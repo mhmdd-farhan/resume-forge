@@ -60,11 +60,15 @@ N8N_BASIC_AUTH=resumeforge1209:resumeforge1209
 MIDTRANS_ENV=production                 # or sandbox while testing
 MIDTRANS_SERVER_KEY=...
 MIDTRANS_CLIENT_KEY=...
-MIDTRANS_STARTER_PRICE=15000           # optional overrides
+MIDTRANS_STARTER_PRICE=15000           # charge amount (optional overrides)
 MIDTRANS_PREMIUM_PRICE=49000
 MIDTRANS_ANNUAL_PRICE=399000
+NEXT_PUBLIC_MIDTRANS_STARTER_PRICE=15000   # what the landing page SHOWS —
+NEXT_PUBLIC_MIDTRANS_PREMIUM_PRICE=49000   # must match MIDTRANS_*_PRICE so
+NEXT_PUBLIC_MIDTRANS_ANNUAL_PRICE=399000   # display == charge
 NEXT_PUBLIC_APP_URL=https://your-app-domain.com
 ```
+> Pricing: the server charges using `MIDTRANS_*_PRICE` (falls back to `NEXT_PUBLIC_MIDTRANS_*_PRICE`); the landing page displays `NEXT_PUBLIC_MIDTRANS_*_PRICE` (falls back to the built-in default 15000/49000/399000). Keep both in sync. `NEXT_PUBLIC_*` values are baked into the client bundle at **build** time, so changing them requires a redeploy.
 > ⚠️ **Auth is a custom Google OAuth flow** — no next-auth, and no `NEXTAUTH_URL`/`NEXTAUTH_SECRET`/`AUTH_SECRET` are needed (sessions are opaque tokens stored in the `Session` table, so there is no signing secret to misconfigure).
 
 > `NEXT_APP_URL` is the preferred name (server-side); `NEXT_PUBLIC_APP_URL` is read as a fallback and is also used by the client bundle. `vercel.json` `build.env` injects both at build time.
