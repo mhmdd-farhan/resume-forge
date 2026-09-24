@@ -67,6 +67,8 @@ NEXT_PUBLIC_APP_URL=https://your-app-domain.com
 ```
 
 > `NEXT_PUBLIC_*` vars must also be added to the **Preview** environment (or set the domain-based override) so the Midtrans `notification_url` and checkout redirects are correct on previews.
+>
+> ⚠️ **`NEXTAUTH_URL` must be a non-empty absolute URL** (e.g. `https://your-app-domain.com`). If it is set to an empty string, `next-auth/react` crashes the build at prerender with `TypeError [ERR_INVALID_URL]: Invalid URL (input: '')`. As a safety net, `vercel.json` (`build.env`) injects `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` at build time — but set them in the dashboard too so the **runtime** (next-auth server, Midtrans `notification_url`) uses the right values.
 
 **Database on Vercel:** set `DATABASE_URL` to a hosted Postgres (e.g. Neon, Supabase, Vercel Postgres). Apply the schema once after setup:
 

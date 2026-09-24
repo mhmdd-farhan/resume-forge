@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { getActivePlan } from "@/lib/plans";
 
+export const dynamic = "force-dynamic";
+
 const FREE_LIMIT = 3;
 const STARTER_DAILY_LIMIT = 4;
 
