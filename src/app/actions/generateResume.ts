@@ -7,8 +7,7 @@ import {
   parseLinkedInProfile,
 } from "@/lib/parser";
 import { generateResumeWithAI } from "@/lib/ai";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { getActivePlan } from "@/lib/plans";
 
@@ -25,12 +24,12 @@ export async function generateResume(
   { success: true; data: GenerateResult } | { success: false; error: string }
 > {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || !(session.user as any).id) {
+    const user = await getCurrentUser();
+    if (!user) {
       return { success: false, error: "Please sign in with Google to generate a resume." };
     }
 
-    const userId = (session.user as any).id;
+    const userId = user.id;
 
     // Always read fresh from DB — never trust JWT for billing-critical checks
     const dbUser = await prisma.user.findUnique({

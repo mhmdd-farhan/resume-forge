@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { getCurrentUser } from "@/lib/session";
 import {
   buildOrderId,
   createSnapTransaction,
@@ -16,8 +15,8 @@ const VALID_PLANS: Record<string, PaidPlanType> = {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || !(session.user as any).id) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
       return NextResponse.json(
         { error: "Unauthorized. Please sign in." },
         { status: 401 },
@@ -46,15 +45,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = session.user as any;
-    const orderId = buildOrderId(planType, user.id as string);
+    const orderId = buildOrderId(planType, currentUser.id);
 
     const { redirectUrl, token } = await createSnapTransaction({
       orderId,
       plan: planType,
       customer: {
-        first_name: user.name || undefined,
-        email: user.email || undefined,
+        first_name: currentUser.name || undefined,
+        email: currentUser.email || undefined,
       },
       appUrl,
     });

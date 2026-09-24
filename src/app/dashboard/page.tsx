@@ -22,7 +22,7 @@ import {
   AlertTriangle,
   X,
 } from "lucide-react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useAuth } from "@/components/AuthProvider";
 import { trackClick } from "@/lib/track";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -273,6 +273,7 @@ function DashboardTab({
   onUpgrade: (plan: "starter" | "premium" | "annual") => void;
   onCancelRequest: () => void;
 }) {
+  const { signOut } = useAuth();
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -313,7 +314,7 @@ function DashboardTab({
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => signOut()}
           className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground shrink-0"
         >
           <LogOut className="w-3.5 h-3.5" />
@@ -728,7 +729,7 @@ function GeneratorTab() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { user: session, loading, signIn } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("generate");
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -743,12 +744,12 @@ export default function DashboardPage() {
 
   // Redirect unauthenticated users to Google login
   useEffect(() => {
-    if (status === "unauthenticated") signIn("google", { callbackUrl: "/dashboard" });
-  }, [status]);
+    if (!loading && !session) signIn("/dashboard");
+  }, [loading, session]);
 
   // Fetch dashboard data when tab is opened
   useEffect(() => {
-    if (activeTab === "dashboard" && !dashboardData && status === "authenticated") {
+    if (activeTab === "dashboard" && !dashboardData && !!session) {
       setDashboardLoading(true);
       fetch("/api/dashboard")
         .then((r) => r.json())
@@ -756,7 +757,7 @@ export default function DashboardPage() {
         .catch(console.error)
         .finally(() => setDashboardLoading(false));
     }
-  }, [activeTab, dashboardData, status]);
+  }, [activeTab, dashboardData, session]);
 
   const handleUpgrade = async (planType: "starter" | "premium" | "annual") => {
     if (!session) return;
@@ -800,7 +801,7 @@ export default function DashboardPage() {
   };
 
   // Loading state while checking auth
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
@@ -811,7 +812,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (status === "unauthenticated") return null;
+  if (!session) return null;
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "generate", label: "Generate", icon: <Sparkles className="w-4 h-4" /> },
@@ -868,15 +869,15 @@ export default function DashboardPage() {
 
             {/* User info */}
             <div className="flex items-center gap-3">
-              {session?.user && (
+              {session && (
                 <>
                   <span className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                    {(session.user as any).plan || "free"}
+                    {session?.plan || "free"}
                   </span>
-                  {session.user.image && (
+                  {session.image && (
                     <img
-                      src={session.user.image}
-                      alt={session.user.name || "User"}
+                      src={session.image}
+                      alt={session.name || "User"}
                       className="w-7 h-7 rounded-full border border-border shadow-sm"
                     />
                   )}

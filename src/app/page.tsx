@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useAuth } from "@/components/AuthProvider";
 import { trackClick } from "@/lib/track";
 
 // Framer motion animation variants
@@ -41,14 +41,14 @@ const hoverCardEffect = {
 };
 
 export default function LandingPage() {
-  const { data: session, status } = useSession();
+  const { user: session, loading, signIn, signOut } = useAuth();
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSubscribe = async (planType: "starter" | "premium" | "annual") => {
     trackClick(`subscribe_${planType}`);
     if (!session) {
-      signIn("google", { callbackUrl: "/dashboard" });
+      signIn();
       return;
     }
 
@@ -183,17 +183,17 @@ export default function LandingPage() {
               Pricing
             </Link>
 
-            {status === "loading" ? (
+            {loading ? (
               <span className="text-xs text-muted-foreground">Loading...</span>
             ) : session ? (
               <div className="flex items-center gap-3">
                 <span className="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                  {(session.user as any).plan || "free"} plan
+                  {session?.plan || "free"} plan
                 </span>
-                {session.user?.image && (
+                {session?.image && (
                   <img
-                    src={session.user.image}
-                    alt={session.user.name || "User"}
+                    src={session.image}
+                    alt={session.name || "User"}
                     className="w-7 h-7 rounded-full border border-border shadow-sm"
                   />
                 )}
@@ -211,7 +211,7 @@ export default function LandingPage() {
             ) : (
               <>
                 <button
-                  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                  onClick={() => signIn()}
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
                   Sign In
@@ -225,10 +225,10 @@ export default function LandingPage() {
 
           {/* Mobile: avatar (if logged in) + burger */}
           <div className="flex sm:hidden items-center gap-2">
-            {session?.user?.image && (
+            {session?.image && (
               <img
-                src={session.user.image}
-                alt={session.user.name || "User"}
+                src={session.image}
+                alt={session.name || "User"}
                 className="w-7 h-7 rounded-full border border-border shadow-sm"
               />
             )}
@@ -261,10 +261,10 @@ export default function LandingPage() {
                   Pricing
                 </Link>
 
-                {status !== "loading" && !session && (
+                {!loading && !session && (
                   <>
                     <button
-                      onClick={() => { signIn("google", { callbackUrl: "/dashboard" }); setMobileMenuOpen(false); }}
+                      onClick={() => { signIn(); setMobileMenuOpen(false); }}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-all text-left"
                     >
                       Sign In
@@ -279,13 +279,13 @@ export default function LandingPage() {
                   </>
                 )}
 
-                {status !== "loading" && session && (
+                {!loading && session && (
                   <>
                     <div className="px-3 py-2 flex items-center gap-2">
                       <span className="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                        {(session.user as any).plan || "free"} plan
+                        {session?.plan || "free"} plan
                       </span>
-                      <span className="text-sm text-muted-foreground truncate">{session.user?.name}</span>
+                      <span className="text-sm text-muted-foreground truncate">{session?.name}</span>
                     </div>
                     <Link
                       href="/dashboard"
@@ -659,7 +659,7 @@ export default function LandingPage() {
                     variant="outline"
                     className="w-full rounded-xl border-teal-500/50 text-teal-600 hover:bg-teal-500/5 hover:scale-[1.01] active:scale-[0.99] transition-all"
                   >
-                    {loadingCheckout === "starter" ? "Loading..." : (session && (session.user as any).plan === "starter" ? "Active Plan" : "Get Starter")}
+                    {loadingCheckout === "starter" ? "Loading..." : (session && session.plan === "starter" ? "Active Plan" : "Get Starter")}
                   </Button>
                 </CardContent>
               </Card>
@@ -705,7 +705,7 @@ export default function LandingPage() {
                     disabled={loadingCheckout !== null}
                     className="w-full rounded-xl shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
                   >
-                    {loadingCheckout === "premium" ? "Loading..." : (session && (session.user as any).plan === "premium" ? "Active Plan" : "Upgrade Now")}
+                    {loadingCheckout === "premium" ? "Loading..." : (session && session.plan === "premium" ? "Active Plan" : "Upgrade Now")}
                   </Button>
                 </CardContent>
               </Card>
@@ -755,7 +755,7 @@ export default function LandingPage() {
                     variant="outline"
                     className="w-full rounded-xl hover:scale-[1.01] active:scale-[0.99] transition-all"
                   >
-                    {loadingCheckout === "annual" ? "Loading..." : (session && (session.user as any).plan === "annual" ? "Active Plan" : "Choose Annual")}
+                    {loadingCheckout === "annual" ? "Loading..." : (session && session.plan === "annual" ? "Active Plan" : "Choose Annual")}
                   </Button>
                 </CardContent>
               </Card>
