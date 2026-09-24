@@ -20,7 +20,23 @@ if (!googleClientId || !googleClientSecret) {
   );
 }
 
+// Surface the real failure when an OAuth flow errors (e.g.
+// OAUTH_CALLBACK_HANDLER_ERROR wraps the Google token-exchange error) instead
+// of only seeing the generic /api/auth/signin?error=Callback page.
+const logger: NextAuthOptions["logger"] = {
+  error(code, ...message) {
+    console.error(`[next-auth][error][${code}]`, ...message);
+  },
+  warn(code, ...message) {
+    console.warn(`[next-auth][warn][${code}]`, ...message);
+  },
+  debug(code, ...message) {
+    if (process.env.NEXTAUTH_DEBUG) console.debug(`[next-auth][debug][${code}]`, ...message);
+  },
+};
+
 export const authOptions: NextAuthOptions = {
+  logger,
   adapter: PrismaAdapter(prisma) as any,
   providers: [
     GoogleProvider({
