@@ -1,127 +1,187 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ResumeForge
 
-## Getting Started
+AI resume generator with Google sign-in and Midtrans (Snap) payments.
 
-First, run the development server:
+Built with **SvelteKit 2 + Svelte 5** (runes), Tailwind CSS, Prisma, and a custom Google OAuth + DB-session auth — migrated from Next.js App Router. All external integration contracts are unchanged:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Google OAuth redirect URI: `/api/auth/callback/google` (same as legacy next-auth)
+- Midtrans payment notification URL: `/api/webhook/midtrans`
+- Auth/analytics cookies: `rf_session`, `rf_oauth_state`, `rf_oauth_verifier`, `rf_oauth_cb`
+- `/admin` protected by HTTP Basic auth (`ADMIN_USERNAME` / `ADMIN_PASSWORD`)
+- Prisma schema untouched (`prisma/schema.prisma`)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Concern        | Choice                                        |
+| -------------- | --------------------------------------------- |
+| Framework      | SvelteKit 2 / Svelte 5 (runes) + Vite 5       |
+| Styling        | Tailwind CSS 3.4 (same theme tokens as before) |
+| Icons          | `lucide-svelte`                               |
+| Animations     | CSS classes in `src/app.css` (`motion-fade-up`, `animate-marquee`, `animate-fill-bar`, …) — no framer-motion |
+| Data layer     | Prisma (Postgres)                             |
+| Auth           | Custom Google OAuth (PKCE) + opaque DB sessions |
+| Payments       | Midtrans Snap (one-time plans: Starter / Premium / Annual) |
+| PDF export     | `pdf-lib` (client-side)                       |
+| Validation     | `zod`                                         |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Getting started
 
-## Learn More
+> ⚠️ **No lockfile is committed** (it was tied to the old Next.js dependency tree). Run `npm install` once on a machine with Node to generate a fresh `package-lock.json` before building or deploying.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-### Vercel CI/CD checklist
-
-The repo is pre-configured for Vercel: `vercel.json` (framework, `npm install` command, Singapore region, `maxDuration` on the Midtrans webhook), `postinstall: prisma generate`, build command `prisma generate && next build`, and a `.vercelignore`.
-
-**Before pushing, run locally (required — this machine has no Node):**
+Prerequisite: Node 18.17+.
 
 ```bash
-npm install                    # refresh package-lock.json (removes @polar-sh/*)
-npx prisma generate            # generate Prisma Client for the new schema
-npm run build                  # make sure it compiles
+npm install          # first run — generates package-lock.json
+cp .env.example .env # then fill in real values
 ```
 
-**Environment variables to set in Vercel → Project → Settings → Environment Variables:**
+Local development:
+
+```bash
+npm run dev          # http://localhost:5173
+```
+
+Quality / production commands:
+
+```bash
+npm run check        # svelte-check (type-checks all routes/components)
+npm run lint         # eslint
+npm run build        # prisma generate && vite build
+npm run preview      # serve the production build locally (adapter-node)
+```
+
+Database schema (migrations live in `prisma/migrations/`):
+
+```bash
+npx prisma db push    # quick schema sync
+# or
+npm run db:migrate    # npx prisma migrate deploy
+```
+
+## Environment variables
 
 ```env
-DATABASE_URL=postgresql://...          # hosted Postgres (Neon/Supabase) — not the docker one
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-ADMIN_USERNAME=...                     # /admin basic-auth (leave unset to keep /admin closed)
-ADMIN_PASSWORD=...
-N8N_WEBHOOK_URL=https://n8n.gloapp.my.id/webhook/resume-generator
-N8N_BASIC_AUTH=resumeforge1209:resumeforge1209
-MIDTRANS_ENV=production                 # or sandbox while testing
-MIDTRANS_SERVER_KEY=...
-MIDTRANS_CLIENT_KEY=...
-MIDTRANS_STARTER_PRICE=15000           # charge amount (optional overrides)
-MIDTRANS_PREMIUM_PRICE=49000
-MIDTRANS_ANNUAL_PRICE=399000
-NEXT_PUBLIC_MIDTRANS_STARTER_PRICE=15000   # what the landing page SHOWS —
-NEXT_PUBLIC_MIDTRANS_PREMIUM_PRICE=49000   # must match MIDTRANS_*_PRICE so
-NEXT_PUBLIC_MIDTRANS_ANNUAL_PRICE=399000   # display == charge
+# ——— Core ———
+DATABASE_URL=postgresql://user:password@host:5432/database
+
+# Admin dashboard HTTP basic auth (leave unset to keep /admin closed)
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change-me
+
+# ——— Google OAuth (Google Cloud Console → Credentials → OAuth 2.0 Client IDs, type Web application) ———
+# Redirect URI to register: https://your-app-domain.com/api/auth/callback/google
+GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxxx
+
+# Public site URL. NEXT_APP_URL is preferred (server env);
+# NEXT_PUBLIC_APP_URL is read as a fallback.
+NEXT_APP_URL=https://your-app-domain.com
 NEXT_PUBLIC_APP_URL=https://your-app-domain.com
-```
-> Pricing: the server charges using `MIDTRANS_*_PRICE` (falls back to `NEXT_PUBLIC_MIDTRANS_*_PRICE`); the landing page displays `NEXT_PUBLIC_MIDTRANS_*_PRICE` (falls back to the built-in default 15000/49000/399000). Keep both in sync. `NEXT_PUBLIC_*` values are baked into the client bundle at **build** time, so changing them requires a redeploy.
-> ⚠️ **Auth is a custom Google OAuth flow** — no next-auth, and no `NEXTAUTH_URL`/`NEXTAUTH_SECRET`/`AUTH_SECRET` are needed (sessions are opaque tokens stored in the `Session` table, so there is no signing secret to misconfigure).
 
-> `NEXT_APP_URL` is the preferred name (server-side); `NEXT_PUBLIC_APP_URL` is read as a fallback and is also used by the client bundle. `vercel.json` `build.env` injects both at build time.
+# ——— n8n webhook (AI resume generation) ———
+N8N_WEBHOOK_URL=https://n8n.gloapp.my.id/webhook/resume-generator
+N8N_BASIC_AUTH=username:password
 
-> **Google Cloud Console:** the OAuth client must have the redirect URI `https://<your-domain>/api/auth/callback/google` registered (that's the custom callback — it reuses the legacy next-auth path so an existing registration keeps working). Client type: **Web application** (secret required).
-
-> **Admin:** `/admin` is behind HTTP Basic auth controlled by `ADMIN_USERNAME`/`ADMIN_PASSWORD`. If they are unset, `/admin` responds 500 (`Admin credentials not configured`) and stays closed.
-
-**Database on Vercel:** set `DATABASE_URL` to a hosted Postgres (e.g. Neon, Supabase, Vercel Postgres). Apply the schema once after setup:
-
-```bash
-npx prisma db push    # or: npx prisma migrate deploy
-```
-
-The build itself never touches the database (the admin page is `force-dynamic`), so CI stays green even before `DATABASE_URL` is seeded.
-
-## Payment — Midtrans (Snap)
-
-The app uses Midtrans Snap for paid plans (Starter / Premium / Annual). Payments are **one-time** with a validity period (Starter & Premium: 30 days, Annual: 365 days); the `planExpiresAt` field on the user controls access.
-
-### Environment variables
-
-```env
+# ——— Midtrans (checkout via Snap) ———
 MIDTRANS_ENV=sandbox            # "sandbox" or "production"
 MIDTRANS_SERVER_KEY=SB-Mid-server-xxxx
 MIDTRANS_CLIENT_KEY=SB-Mid-client-xxxx
-MIDTRANS_STARTER_PRICE=15000    # optional overrides (IDR)
+# Price overrides (IDR). Defaults: starter 15000, premium 49000, annual 399000.
+MIDTRANS_STARTER_PRICE=15000    # server charges using these (NEXT_PUBLIC_* as fallback)
 MIDTRANS_PREMIUM_PRICE=49000
 MIDTRANS_ANNUAL_PRICE=399000
-# Public URL (required for the payment notification URL)
-NEXT_APP_URL=https://your-app-domain.com
-NEXT_PUBLIC_APP_URL=https://your-app-domain.com
+NEXT_PUBLIC_MIDTRANS_STARTER_PRICE=15000  # what the landing page SHOWS
+NEXT_PUBLIC_MIDTRANS_PREMIUM_PRICE=49000
+NEXT_PUBLIC_MIDTRANS_ANNUAL_PRICE=399000
 ```
 
-### Setup steps
+> **Pricing:** the server charges using `MIDTRANS_*_PRICE` (falls back to `NEXT_PUBLIC_MIDTRANS_*_PRICE`); the landing page displays `NEXT_PUBLIC_MIDTRANS_*_PRICE`. Keep both in sync. Unlike the old Next.js setup, the `NEXT_PUBLIC_MIDTRANS_*_PRICE` values are read **at runtime** (`$env/dynamic/public`), so changing them does **not** require a rebuild — only a redeploy/restart.
 
-1. Get the Server/Client keys from Midtrans dashboard → **Settings → Access Keys**.
-2. Set `NEXT_PUBLIC_APP_URL` to your public URL — it is used as the base for the payment notification URL (`<APP_URL>/api/webhook/midtrans`).
-3. While testing use `MIDTRANS_ENV=sandbox`; switch to `production` when going live.
-4. The Prisma schema has already been applied to the production database via `prisma/migrations/20260924000000_init`. For other environments:
+> **Auth is a custom Google OAuth flow** — no next-auth, and no `NEXTAUTH_URL`/`NEXTAUTH_SECRET`/`AUTH_SECRET` are needed. Sessions are opaque random tokens stored in the `Session` table (cookie `rf_session`), so there is no signing secret to misconfigure.
 
-   ```bash
-   npx prisma migrate deploy   # applies pending migrations from prisma/migrations/
-   # or for quick schema sync: npx prisma db push
-   ```
-   (The initial migration creates all tables with `planExpiresAt`, `midtransOrderId`, `midtransPaymentType` — the old Polar fields no longer exist.)
+> **Google Cloud Console:** the OAuth client must have the redirect URI `https://<your-domain>/api/auth/callback/google` registered — the custom callback reuses the legacy next-auth path, so an existing registration keeps working. Client type: **Web application** (client secret required).
+
+> **Admin:** `/admin` is behind HTTP Basic auth (`ADMIN_USERNAME`/`ADMIN_PASSWORD`). If they are unset, `/admin` responds 500 (`Admin credentials not configured`) and stays closed.
+
+## Project structure
+
+```
+src/
+├── app.html, app.d.ts, app.css     # shell, global types, design tokens + animation CSS
+├── hooks.server.ts                 # /admin basic auth guard (whole /admin subtree)
+├── lib/
+│   ├── server/
+│   │   ├── auth.ts                 # Google OAuth helpers (PKCE, token exchange, profile)
+│   │   ├── session.ts              # DB sessions + cookie helpers (getCurrentUser(cookies))
+│   │   ├── config.ts               # APP_URL resolution from NEXT_APP_URL/NEXT_PUBLIC_APP_URL
+│   │   ├── midtrans.ts             # Snap checkout + webhook signature/status verification
+│   │   ├── plans.ts                # PLANS (price/validity) + getActivePlan()
+│   │   ├── resume.ts               # generateResume() → n8n AI webhook
+│   │   └── prisma.ts               # Prisma client singleton
+│   ├── components/                 # UI primitives + app components (Button, ResumePreview, …)
+│   ├── types.ts                    # zod schemas, ProfileForm, Resume types
+│   ├── generate.ts                 # client wrapper for the /dashboard?/generate action
+│   ├── pdf.ts, pricing.ts, track.ts, auth.ts (client helpers)
+│   └── utils.ts                    # cn() = clsx + tailwind-merge
+└── routes/
+    ├── +layout.server.ts           # loads user ($page.data.user) + appUrl for every page
+    ├── +page.svelte                # landing page (hero, marquee, pricing, footer, JSON-LD)
+    ├── dashboard/                  # generate wizard + usage/plan tab (server load + ?/generate action)
+    ├── admin/                      # stats dashboard (protected by hooks.server.ts)
+    ├── generate/                   # legacy URL → 303 redirect to /dashboard
+    ├── api/
+    │   ├── auth/google             # OAuth step 1 (PKCE cookies → Google consent)
+    │   ├── auth/callback/google    # OAuth step 2 (code exchange, upsert user, set rf_session)
+    │   ├── auth/signout            # destroy session + clear cookie
+    │   ├── checkout                # create Midtrans Snap transaction
+    │   ├── track                   # analytic events (pageview / click)
+    │   ├── env-check               # runtime env diagnostics (no values leaked)
+    │   └── webhook/midtrans        # payment notification (signature + status verified)
+    ├── sitemap.xml/robots.txt      # SEO endpoints
+```
+
+## Server loads & form actions
+
+- The signed-in user is provided by the root `+layout.server.ts` load as `$page.data.user` — there is **no** `/api/auth/session` polling.
+- The dashboard data is a server load on `/dashboard` (`dashboardData`).
+- Resume generation is the `?/generate` form action **on the dashboard page** (`/dashboard?/generate`), invoked from the client with `fetch` + `accept: application/json` and parsed from the SvelteKit `ActionResult` envelope. Subscription cancellation is the `?/cancelSubscription` action with `use:enhance`.
+
+## Payment — Midtrans (Snap)
+
+Payments are **one-time** with a validity period (Starter & Premium: 30 days, Annual: 365 days); `planExpiresAt` on the user controls access.
 
 ### Checkout flow
 
-1. `/api/checkout` (POST `{ planType }`) creates a Snap transaction via `src/lib/midtrans.ts` and returns `{ url, token }` — the client redirects to `url`.
-2. Midtrans sends a payment notification to `/api/webhook/midtrans`. The route verifies the **signature key** (`sha512(order_id + status_code + gross_amount + server_key)`), re-checks the status via the Midtrans Status API, then grants the plan by setting `plan` + `planExpiresAt`.
-3. Statuses treated as paid: `settlement`, and `capture` with `fraud_status = accept`.
+1. `/api/checkout` (POST `{ planType }`) — requires sign-in — creates a Snap transaction via `src/lib/server/midtrans.ts` and returns `{ url, token, orderId }`; the client redirects to `url`.
+2. Midtrans sends a payment notification to `/api/webhook/midtrans`. The route verifies the **signature key** (`sha512(order_id + status_code + gross_amount + server_key)`), re-checks the status via the Midtrans Status API, then grants the plan by setting `plan` + `planExpiresAt` (`midtransOrderId`/`midtransPaymentType` are recorded for idempotency/audit).
+3. Statuses treated as paid: `settlement`, and `capture` with `fraud_status = accept`. The route always answers `200 ok` so Midtrans stops retrying; the webhook and the generate action allow up to 60 s (`export const config = { maxDuration: 60 }`).
 
-### Old Polar migration note
+## Deploy
 
-Everything referencing Polar has been removed. Run `npm install` to refresh `package-lock.json` (the `@polar-sh/*` packages are gone from `package.json`).
+### Vercel
+
+The repo is pre-configured: `vercel.json` (framework = sveltekit, Singapore region via `build.env`-free config, install command), `@sveltejs/adapter-vercel` as devDependency, `postinstall: prisma generate`, build `prisma generate && vite build`, and `.vercelignore`.
+
+1. Import the repo in Vercel, set the environment variables from the table above (both `NEXT_APP_URL` and `NEXT_PUBLIC_APP_URL`).
+2. Set `DATABASE_URL` to hosted Postgres (Neon/Supabase/Vercel Postgres) and apply the schema once: `npx prisma db push` or `npm run db:migrate`.
+3. Register the callback URL in Google Cloud Console: `https://<your-domain>/api/auth/callback/google`; set `NEXT_PUBLIC_APP_URL` to the same domain.
+
+### Docker / Node
+
+`Dockerfile` uses `adapter-node` (via `adapter-auto` fallback). First run `npm install` locally (generates the lockfile), then:
+
+```bash
+docker build -t resume-forge .
+docker run -p 3000:3000 --env-file .env resume-forge
+```
+
+The container runs `npx prisma db push && node build/index.js` on start.
+
+### Diagnostic endpoint
+
+`GET /api/env-check` reports whether each important env var is present/non-empty at runtime **without revealing values** — handy for debugging deploy-time vs runtime env mismatches.
+
+## Notes
+
+- `prisma/schema.prisma`, `prisma/migrations/`, `n8n/` workflows, and `.vercelignore` are left untouched by the migration.
+- The legacy `/generate` URL 303-redirects to `/dashboard` (generation now lives in the dashboard Generate tab).

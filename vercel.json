@@ -1,16 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
+  "framework": "sveltekit",
   "installCommand": "npm install",
   "regions": ["sin1"],
-  "functions": {
-    "src/app/api/webhook/midtrans/route.ts": {
-      "maxDuration": 60
-    }
-  },
   "build": {
     "env": {
-      "NEXTAUTH_URL": "https://resume-forge.gloapp.my.id",
       "NEXT_APP_URL": "https://resume-forge.gloapp.my.id",
       "NEXT_PUBLIC_APP_URL": "https://resume-forge.gloapp.my.id"
     }

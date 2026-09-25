@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 230 25% 97%;
+    --foreground: 230 15% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 230 15% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 15% 12%;
+    --primary: 245 58% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 15% 95%;
+    --secondary-foreground: 230 15% 15%;
+    --muted: 230 15% 95%;
+    --muted-foreground: 230 10% 42%;
+    --accent: 245 58% 51%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 12% 89%;
+    --input: 230 12% 89%;
+    --ring: 245 58% 51%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 230 20% 8%;
+    --foreground: 230 10% 92%;
+    --card: 230 18% 11%;
+    --card-foreground: 230 10% 92%;
+    --popover: 230 18% 11%;
+    --popover-foreground: 230 10% 92%;
+    --primary: 245 70% 65%;
+    --primary-foreground: 230 20% 8%;
+    --secondary: 230 15% 16%;
+    --secondary-foreground: 230 10% 92%;
+    --muted: 230 15% 16%;
+    --muted-foreground: 230 8% 55%;
+    --accent: 245 70% 65%;
+    --accent-foreground: 230 20% 8%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 12% 18%;
+    --input: 230 12% 18%;
+    --ring: 245 70% 65%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ─── Custom keyframe animations ──────────────────────────────────────────── */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fill-bar {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* Lightweight mount animations (drop-in for framer-motion variants).
+   `both` keeps the element hidden while the delay elapses. */
+.motion-fade-up {
+  animation: fade-up 0.5s ease-out both;
+}
+
+.motion-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+/* Marquee (university ticker — duplicated list scrolls -50%) */
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Progress pipeline bar fill */
+.animate-fill-bar {
+  animation: fill-bar 2s linear forwards;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(245 58% 51% / 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.glass {
+  background: hsl(0 0% 100% / 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid hsl(0 0% 0% / 0.06);
+}
+
+.dark .glass {
+  background: hsl(230 18% 11% / 0.6);
+  border: 1px solid hsl(0 0% 100% / 0.06);
+}
+
+/* Gradient background mesh */
+.gradient-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.gradient-mesh::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: hsl(245 58% 75% / 0.08);
+  filter: blur(80px);
+}
+
+.gradient-mesh::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  background: hsl(280 50% 70% / 0.06);
+  filter: blur(80px);
+}
+
+.dark .gradient-mesh::before {
+  background: hsl(245 58% 40% / 0.15);
+}
+
+.dark .gradient-mesh::after {
+  background: hsl(280 50% 35% / 0.1);
+}

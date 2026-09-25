@@ -12,12 +12,12 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# sveltekit
+/.svelte-kit/
+/build/
 
 # production
-/build
+/dist
 
 # misc
 .DS_Store
@@ -41,4 +41,3 @@ error_log
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
