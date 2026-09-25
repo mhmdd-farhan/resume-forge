@@ -41,7 +41,7 @@
 		icon: 'h-10 w-10'
 	};
 
-	const classNames = cn(base, variantClasses[variant], sizeClasses[size], className);
+	const classNames = $derived(cn(base, variantClasses[variant], sizeClasses[size], className));
 </script>
 
 {#if href}

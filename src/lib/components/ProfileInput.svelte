@@ -22,9 +22,21 @@
 		onBack
 	}: { form: ProfileForm; onNext: () => void; onBack: () => void } = $props();
 
-	let showGithubRepos = $state(form.githubRepoUrls.some((u) => u.trim()));
-	let showLinkedinPaste = $state(!!form.linkedinText);
-	let showEducation = $state(!!form.educationText);
+	// Initial visibility for the collapsible sections — intentionally computed
+	// once on mount. The parent remounts this step for each generation, so the
+	// section starts collapsed/expanded based on the fresh form data.
+	function hasGithubRepos(): boolean {
+		return form.githubRepoUrls.some((u) => u.trim());
+	}
+	function hasLinkedinPaste(): boolean {
+		return !!form.linkedinText;
+	}
+	function hasEducation(): boolean {
+		return !!form.educationText;
+	}
+	let showGithubRepos = $state(hasGithubRepos());
+	let showLinkedinPaste = $state(hasLinkedinPaste());
+	let showEducation = $state(hasEducation());
 
 	function updateRepoUrl(index: number, value: string) {
 		form.githubRepoUrls[index] = value;

@@ -29,11 +29,10 @@
 		<div class="relative group">
 			<div
 				class="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-primary/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur-sm"
-			/>
+			></div>
 			<textarea
 				bind:value
 				placeholder="Paste the full job description here — including role title, requirements, responsibilities, and preferred qualifications..."
-				autofocus
 				class="relative w-full h-40 sm:h-56 resize-none rounded-xl border border-border bg-card/80 backdrop-blur-sm px-5 py-4 text-sm leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all duration-200"
 			></textarea>
 		</div>

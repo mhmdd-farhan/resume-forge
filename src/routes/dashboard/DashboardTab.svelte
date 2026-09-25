@@ -47,7 +47,7 @@
 
 {#if !data}
 	<div class="flex flex-col items-center justify-center py-20 gap-3">
-		<div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+		<div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
 		<p class="text-sm text-muted-foreground">Loading your dashboard…</p>
 	</div>
 {:else}
@@ -230,7 +230,7 @@
 		<!-- Upgrade CTA — free users only -->
 		{#if !isPremium && !isStarter}
 			<Card class="border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-card to-card rounded-2xl overflow-hidden relative">
-				<div class="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
+				<div class="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
 				<CardContent class="p-6">
 					<div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
 						<div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">

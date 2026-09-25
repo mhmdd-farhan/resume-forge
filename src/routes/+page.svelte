@@ -74,7 +74,7 @@
 		'SMKN 7 Semarang'
 	];
 
-	const jsonLd = JSON.stringify({
+	const jsonLd = $derived(JSON.stringify({
 		'@context': 'https://schema.org',
 		'@graph': [
 			{
@@ -134,7 +134,7 @@
 		]
 	})
 		.replace(/</g, '\\u003c')
-		.replace(/>/g, '\\u003e');
+		.replace(/>/g, '\\u003e'));
 </script>
 
 <svelte:head>
@@ -343,16 +343,16 @@
 				<!-- Browser Header Bar -->
 				<div class="h-11 border-b border-border/40 bg-muted/40 px-4 flex items-center justify-between select-none">
 					<div class="flex items-center gap-2">
-						<span class="w-3 h-3 rounded-full bg-destructive/30" />
-						<span class="w-3 h-3 rounded-full bg-yellow-500/30" />
-						<span class="w-3 h-3 rounded-full bg-emerald-500/30" />
+						<span class="w-3 h-3 rounded-full bg-destructive/30"></span>
+						<span class="w-3 h-3 rounded-full bg-yellow-500/30"></span>
+						<span class="w-3 h-3 rounded-full bg-emerald-500/30"></span>
 					</div>
 					<div
 						class="w-64 sm:w-80 h-6 bg-background/80 rounded-md border border-border/30 text-[10px] text-muted-foreground flex items-center justify-center gap-1 font-mono"
 					>
 						resumeforge.com/generate
 					</div>
-					<div class="w-12" />
+					<div class="w-12"></div>
 				</div>
 
 				<!-- Application Mockup Layout -->
@@ -362,7 +362,7 @@
 					<!-- Form Input Mockup -->
 					<div class="hidden md:flex md:col-span-2 p-6 space-y-4 overflow-hidden flex-col justify-start">
 						<div class="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wide">
-							<div class="w-1.5 h-1.5 rounded-full bg-primary" />
+							<div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
 							<span>Profile Wizard</span>
 						</div>
 						<div class="space-y-1.5">
@@ -419,13 +419,13 @@
 						<div
 							class="max-w-md w-full border border-border/40 rounded-xl bg-card shadow-sm p-4 sm:p-5 relative overflow-hidden text-[10px] space-y-3.5"
 						>
-							<div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10" />
+							<div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10"></div>
 
 							<!-- Name and title -->
 							<div class="space-y-0.5">
 								<div class="font-bold text-sm tracking-tight text-foreground flex items-center gap-1">
 									Alex Morgan
-									<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" title="Editable" />
+									<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" title="Editable"></span>
 								</div>
 								<div class="text-primary font-medium text-[11px]">Frontend Engineer</div>
 								<div class="flex flex-wrap items-center gap-x-2 text-[9px] text-muted-foreground/80 mt-1">
@@ -540,15 +540,15 @@
 			<div class="relative w-full overflow-hidden py-4 mt-8 border-t border-border/10">
 				<div
 					class="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"
-				/>
+				></div>
 				<div
 					class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"
-				/>
+				></div>
 
 				<div class="animate-marquee flex gap-12 whitespace-nowrap text-sm font-semibold text-muted-foreground/60 select-none">
 					{#each [...universities, ...universities] as uni, index (index)}
 						<span class="flex items-center gap-2.5">
-							<span class="w-1.5 h-1.5 rounded-full bg-primary/30" />
+							<span class="w-1.5 h-1.5 rounded-full bg-primary/30"></span>
 							{uni}
 						</span>
 					{/each}
@@ -728,9 +728,9 @@
 			<div class="space-y-3">
 				<span class="text-xs font-bold text-foreground uppercase tracking-widest">Company</span>
 				<ul class="space-y-2 text-xs text-muted-foreground">
-					<li><a href="#" class="hover:text-primary transition-colors">Privacy Policy</a></li>
-					<li><a href="#" class="hover:text-primary transition-colors">Terms of Service</a></li>
-					<li><a href="#" class="hover:text-primary transition-colors">Contact</a></li>
+					<li><span class="hover:text-primary transition-colors cursor-not-allowed">Privacy Policy</span></li>
+					<li><span class="hover:text-primary transition-colors cursor-not-allowed">Terms of Service</span></li>
+					<li><span class="hover:text-primary transition-colors cursor-not-allowed">Contact</span></li>
 				</ul>
 			</div>
 		</div>

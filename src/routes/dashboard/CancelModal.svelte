@@ -60,7 +60,16 @@
 
 <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
 	<!-- Backdrop -->
-	<div class="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in" onclick={onClose} />
+	<div
+		class="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
+		role="button"
+		aria-label="Close modal"
+		tabindex="-1"
+		onclick={onClose}
+		onkeydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') onClose();
+		}}
+	></div>
 	<!-- Modal -->
 	<div class="relative z-10 w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 space-y-5 motion-fade-up">
 		<button
@@ -113,7 +122,7 @@
 			<Button variant="destructive" class="flex-1 rounded-xl" disabled={submitting} type="submit">
 				{#if submitting}
 					<span class="flex items-center gap-2">
-						<span class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+						<span class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
 						Cancelling…
 					</span>
 				{:else}

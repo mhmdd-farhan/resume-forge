@@ -45,7 +45,7 @@
 	<link rel="canonical" href={appUrl} />
 </svelte:head>
 
-<div class="gradient-mesh" />
+<div class="gradient-mesh"></div>
 <PageTracker />
 {@render children()}
 <VercelAnalytics />

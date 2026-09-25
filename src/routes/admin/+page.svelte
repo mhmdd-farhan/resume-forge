@@ -186,10 +186,10 @@
 				<h2 class="text-sm font-semibold">Last 7 Days</h2>
 				<div class="flex items-center gap-3 ml-auto text-[10px] text-muted-foreground">
 					<span class="flex items-center gap-1"
-						><span class="w-2 h-2 rounded-full bg-sky-500 inline-block" />Page Views</span
+						><span class="w-2 h-2 rounded-full bg-sky-500 inline-block"></span>Page Views</span
 					>
 					<span class="flex items-center gap-1"
-						><span class="w-2 h-2 rounded-full bg-pink-500 inline-block" />Clicks</span
+						><span class="w-2 h-2 rounded-full bg-pink-500 inline-block"></span>Clicks</span
 					>
 				</div>
 			</div>
@@ -203,13 +203,13 @@
 									style:height={`${(day.pageViews / maxPv) * 100}%`}
 									style:min-height={day.pageViews > 0 ? '4px' : '0'}
 									title={`${day.pageViews} views`}
-								/>
+								></div>
 								<div
 									class="flex-1 bg-pink-500/70 rounded-t-sm transition-all"
 									style:height={`${(day.clicks / maxCl) * 100}%`}
 									style:min-height={day.clicks > 0 ? '4px' : '0'}
 									title={`${day.clicks} clicks`}
-								/>
+								></div>
 							</div>
 							<span class="text-[8px] text-muted-foreground text-center leading-tight"
 								>{day.label.split(',')[0]}</span
@@ -246,7 +246,7 @@
 									<div
 										class="h-full bg-sky-500/60 rounded-full"
 										style:width={`${(count / max) * 100}%`}
-									/>
+									></div>
 								</div>
 							</div>
 						{/each}
@@ -277,7 +277,7 @@
 									<div
 										class="h-full bg-pink-500/60 rounded-full"
 										style:width={`${(count / max) * 100}%`}
-									/>
+									></div>
 								</div>
 							</div>
 						{/each}
@@ -309,7 +309,7 @@
 								</span>
 							</div>
 							<div class="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-								<div class={`h-full rounded-full ${row.bar}`} style:width={`${pct}%`} />
+								<div class={`h-full rounded-full ${row.bar}`} style:width={`${pct}%`}></div>
 							</div>
 						</div>
 					{/each}

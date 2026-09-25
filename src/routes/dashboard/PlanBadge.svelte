@@ -23,14 +23,15 @@
 		}
 	};
 
-	const c = config[plan] ?? config.free;
+	const c = $derived(config[plan] ?? config.free);
 </script>
 
 <span
 	class={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide border uppercase ${c.className}`}
 >
 	{#if c.icon}
-		<svelte:component this={c.icon} class="w-3 h-3" />
+		{@const Icon = c.icon}
+		<Icon class="w-3 h-3" />
 	{/if}
 	{c.label}
 </span>

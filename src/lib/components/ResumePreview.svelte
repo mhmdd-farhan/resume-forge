@@ -50,7 +50,10 @@
 	// Local editable copy. The parent passes a NEW resume whenever a fresh
 	// generation completes (the component remounts between runs), so there is
 	// no need to re-sync from the prop after mount.
-	const local: Resume = $state(clone(resume));
+	function createLocalCopy(resume: Resume): Resume {
+		return clone(resume);
+	}
+	const local: Resume = $state(createLocalCopy(resume));
 
 	function notify() {
 		onResumeChange?.(clone(local));
@@ -188,7 +191,7 @@
 		<!-- Resume Preview -->
 		<div class="lg:col-span-2 motion-fade-up" style="animation-delay: 0.3s">
 			<div class="glass rounded-2xl p-4 sm:p-8 space-y-5 relative overflow-hidden">
-				<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
+				<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20"></div>
 
 				<!-- Header -->
 				<div class="flex items-start justify-between">
