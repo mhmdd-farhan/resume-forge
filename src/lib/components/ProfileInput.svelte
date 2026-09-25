@@ -12,7 +12,7 @@
 		MapPin,
 		GraduationCap
 	} from 'lucide-svelte';
-	import { Button } from '$lib/components/ui/Button.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { trackClick } from '$lib/track';
 	import type { ProfileForm } from '$lib/types';
 

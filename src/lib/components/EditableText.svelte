@@ -68,7 +68,15 @@
 	{/if}
 {:else}
 	<span
+		role="button"
+		tabindex="0"
 		onclick={startEditing}
+		onkeydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				startEditing();
+			}
+		}}
 		class="cursor-text hover:bg-primary/5 hover:outline hover:outline-1 hover:outline-primary/25 hover:rounded px-0.5 -mx-0.5 transition-colors"
 		title="Click to edit"
 	>

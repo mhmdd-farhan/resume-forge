@@ -13,11 +13,11 @@
 		Pencil,
 		X
 	} from 'lucide-svelte';
-	import { Button } from '$lib/components/ui/Button.svelte';
-	import { Badge } from '$lib/components/ui/Badge.svelte';
-	import { EditableText } from '$lib/components/EditableText.svelte';
-	import { DeleteButton } from '$lib/components/DeleteButton.svelte';
-	import { ScoreRing } from '$lib/components/ScoreRing.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Badge from '$lib/components/ui/Badge.svelte';
+	import EditableText from '$lib/components/EditableText.svelte';
+	import DeleteButton from '$lib/components/DeleteButton.svelte';
+	import ScoreRing from '$lib/components/ScoreRing.svelte';
 	import { trackClick } from '$lib/track';
 	import { clone } from '$lib/utils';
 	import type {

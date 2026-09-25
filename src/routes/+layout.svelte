@@ -1,8 +1,8 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/stores';
-	import { PageTracker } from '$lib/components/PageTracker.svelte';
-	import { VercelAnalytics } from '$lib/components/VercelAnalytics.svelte';
+	import PageTracker from '$lib/components/PageTracker.svelte';
+	import VercelAnalytics from '$lib/components/VercelAnalytics.svelte';
 	import type { Snippet } from 'svelte';
 
 	let { children }: { children: Snippet } = $props();

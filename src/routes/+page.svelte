@@ -14,8 +14,12 @@
 		Menu,
 		X
 	} from 'lucide-svelte';
-	import { Button } from '$lib/components/ui/Button.svelte';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/Card.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Card from '$lib/components/ui/Card.svelte';
+	import CardContent from '$lib/components/ui/CardContent.svelte';
+	import CardDescription from '$lib/components/ui/CardDescription.svelte';
+	import CardHeader from '$lib/components/ui/CardHeader.svelte';
+	import CardTitle from '$lib/components/ui/CardTitle.svelte';
 	import { signIn, signOut } from '$lib/auth';
 	import { trackClick } from '$lib/track';
 	import { formatPrice, priceForPlan } from '$lib/pricing';

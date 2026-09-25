@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { JobInput } from '$lib/components/JobInput.svelte';
-	import { ProfileInput } from '$lib/components/ProfileInput.svelte';
-	import { ProgressPipeline } from '$lib/components/ProgressPipeline.svelte';
-	import { ResumePreview } from '$lib/components/ResumePreview.svelte';
+	import JobInput from '$lib/components/JobInput.svelte';
+	import ProfileInput from '$lib/components/ProfileInput.svelte';
+	import ProgressPipeline from '$lib/components/ProgressPipeline.svelte';
+	import ResumePreview from '$lib/components/ResumePreview.svelte';
 	import { generateResume } from '$lib/generate';
 	import { generateResumePDF } from '$lib/pdf';
 	import { emptyProfileForm } from '$lib/types';

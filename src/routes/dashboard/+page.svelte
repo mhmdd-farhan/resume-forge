@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Anvil, Sparkles, LayoutDashboard, AlertCircle, X } from 'lucide-svelte';
-	import { GeneratorTab } from './GeneratorTab.svelte';
-	import { DashboardTab } from './DashboardTab.svelte';
-	import { CancelModal } from './CancelModal.svelte';
+	import GeneratorTab from './GeneratorTab.svelte';
+	import DashboardTab from './DashboardTab.svelte';
+	import CancelModal from './CancelModal.svelte';
 	import { trackClick } from '$lib/track';
 
 	type Tab = 'generate' | 'dashboard';

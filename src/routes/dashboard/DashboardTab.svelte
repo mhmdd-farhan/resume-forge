@@ -12,16 +12,16 @@
 		XCircle,
 		ChevronRight
 	} from 'lucide-svelte';
-	import { Button } from '$lib/components/ui/Button.svelte';
-	import { Card } from '$lib/components/ui/Card.svelte';
-	import { CardHeader } from '$lib/components/ui/CardHeader.svelte';
-	import { CardTitle } from '$lib/components/ui/CardTitle.svelte';
-	import { CardDescription } from '$lib/components/ui/CardDescription.svelte';
-	import { CardContent } from '$lib/components/ui/CardContent.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Card from '$lib/components/ui/Card.svelte';
+	import CardHeader from '$lib/components/ui/CardHeader.svelte';
+	import CardTitle from '$lib/components/ui/CardTitle.svelte';
+	import CardDescription from '$lib/components/ui/CardDescription.svelte';
+	import CardContent from '$lib/components/ui/CardContent.svelte';
 	import { signOut } from '$lib/auth';
 	import { trackClick } from '$lib/track';
-	import { PlanBadge } from './PlanBadge.svelte';
-	import { UsageMeter } from './UsageMeter.svelte';
+	import PlanBadge from './PlanBadge.svelte';
+	import UsageMeter from './UsageMeter.svelte';
 
 	let {
 		onUpgrade,

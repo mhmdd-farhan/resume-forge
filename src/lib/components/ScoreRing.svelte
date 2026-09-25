@@ -11,7 +11,7 @@
 
 	const R = 28;
 	const circumference = 2 * Math.PI * R;
-	const target = circumference - (Math.min(Math.max(value, 0), 100) / 100) * circumference;
+	const target = $derived(circumference - (Math.min(Math.max(value, 0), 100) / 100) * circumference);
 	let offset = $state(circumference);
 
 	$effect(() => {

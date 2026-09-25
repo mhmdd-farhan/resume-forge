@@ -2,7 +2,7 @@
 	import { AlertTriangle, X, XCircle, CheckCircle2 } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
-	import { Button } from '$lib/components/ui/Button.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
 
 	let {
