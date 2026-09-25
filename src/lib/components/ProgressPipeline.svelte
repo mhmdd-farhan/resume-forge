@@ -67,16 +67,11 @@
 				{@const isPending = index > currentStepIndex}
 				{@const Icon = step.icon}
 				<div
-					class="motion-fade-in flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-500"
+					class={`motion-fade-in flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-500 ${isCurrent ? 'bg-primary/5' : ''} ${isPending ? 'opacity-40' : ''}`}
 					style={`animation-delay: ${index * 0.08}s`}
-					class:bg-primary/5={isCurrent}
-					class:opacity-40={isPending}
 				>
 					<div
-						class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-500"
-						class:bg-emerald-500/10={isCompleted}
-						class:bg-primary/10={isCurrent}
-						class:bg-muted={isPending}
+						class={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-500 ${isCompleted ? 'bg-emerald-500/10' : ''} ${isCurrent ? 'bg-primary/10' : ''} ${isPending ? 'bg-muted' : ''}`}
 					>
 						{#if isCompleted}
 							<span class="animate-fade-in">
